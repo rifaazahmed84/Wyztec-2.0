@@ -110,7 +110,7 @@ app.get('/sitemap.xml', (_req, res) => {
       `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${base}${u}</loc></url>`).join('')}</urlset>`,
     );
 });
-// Vercel routes frontend traffic to the independently built client service.
+// Vercel serves the built frontend from its CDN, separately from this function.
 if (config.production && process.env.VERCEL !== '1') {
   const client = path.resolve(fileURLToPath(new URL('../../client/dist', import.meta.url)));
   app.use(express.static(client));
