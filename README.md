@@ -37,7 +37,7 @@ There is no Services configuration and no internal binding.
 
 | Setting | Value |
 | --- | --- |
-| Root Directory | Repository root (leave blank or use .) |
+| Root Directory | Repository root (leave the setting blank) |
 | Framework Preset | Vite |
 | Install Command | npm ci --include=dev |
 | Build Command | npm run build |
@@ -46,6 +46,10 @@ There is no Services configuration and no internal binding.
 Remove conflicting dashboard overrides and the old Services configuration.
 Import the repository root as a single project if the previous service layout
 persists in the existing project.
+
+Use the root lockfile and `npm ci --include=dev`, not `--legacy-peer-deps`.
+The client declares TypeScript, Node types, and Testing Library DOM explicitly
+so clean builds do not depend on packages installed incidentally by another workspace.
 
 Requests to /api, /api/*, /robots.txt and /sitemap.xml go to Express. Static
 assets come from the frontend output; other website routes use index.html for
