@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+server/data/*.json
+!server/data/.gitkeep
+*.log
+coverage/
+.qa/
+client/public/images/incoming/*
+!client/public/images/incoming/.gitkeep

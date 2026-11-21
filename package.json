@@ -1,0 +1,41 @@
+{
+  "name": "wyztec",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n API,WEB \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client && npm run build -w server",
+    "start": "npm run start -w server",
+    "test": "npm run test -w server && npm run test -w client && npm run test:images",
+    "typecheck": "npm run typecheck --workspaces && tsc -p scripts/tsconfig.json",
+    "lint": "eslint client/src server/src",
+    "format": "prettier --write client/src server/src README.md",
+    "test:browser": "node scripts/browser-qa.mjs",
+    "test:lighthouse": "node scripts/lighthouse.mjs",
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "process:images": "tsx scripts/process-images.ts",
+    "test:images": "vitest run --root scripts process-images.test.ts",
+    "verify:images": "node scripts/verify-product-images.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^9.20.0",
+    "@playwright/test": "^1.65.1",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.20.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^15.15.0",
+    "lighthouse": "^13.6.0",
+    "prettier": "^3.5.0",
+    "sharp": "^0.35.5",
+    "typescript": "~5.7.3",
+    "typescript-eslint": "^8.24.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
