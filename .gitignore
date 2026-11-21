@@ -10,5 +10,6 @@ server/data/*.json
 *.log
 coverage/
 .qa/
+.vercel/
 client/public/images/incoming/*
 !client/public/images/incoming/.gitkeep

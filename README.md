@@ -28,6 +28,51 @@ npm start
 
 `npm start` explicitly enables production serving on port 3001. It does not depend on the calling shell's `NODE_ENV` syntax. To stop either server, press Ctrl+C.
 
+## Vercel services deployment
+
+The root `vercel.json` defines two independently built services in one project.
+Import the repository with the project Root Directory set to the repository root,
+not `client` or `server`. Leave project-level build/output overrides unset.
+
+- `client`: Vite static frontend, public at `/` and all remaining website paths.
+  Its service-local rewrite supports direct visits to React Router pages.
+- `server`: Express, explicitly entered through the default export in
+  `server/src/app.ts`. Public routes are `/api`, `/api/*`, `/robots.txt`, and
+  `/sitemap.xml`. The original `/api` prefix reaches Express unchanged.
+- No bindings are declared: browser JavaScript calls same-origin `/api/*`;
+  neither service makes runtime calls to another service. Binding URLs cannot be
+  consumed by a static Vite build or exposed as `VITE_*` variables.
+- `npm run dev` retains its local Vite API proxy. With `VERCEL=1`, the proxy and
+  Express's standalone frontend serving are disabled; Vercel owns routing.
+
+From the repository root, test the combined service router with:
+
+```powershell
+npx.cmd vercel@latest dev --listen 3100
+```
+
+The CLI may require login and project linking. Check `/api/health`,
+`/api/products`, `/products/siemens-ie4-motor`, a product WebP, `/robots.txt`,
+`/sitemap.xml`, and an unknown `/api/*` path (must return JSON 404).
+Run `npm.cmd run build` and `npm.cmd run test` for application validation.
+Do not treat those checks alone as verification of Vercel's router.
+
+Configure `SITE_URL`, `VITE_SITE_URL` (build-time), `CORS_ORIGIN`, and the SMTP
+variables documented below in Vercel environment settings. Keep the canonical
+URLs aligned with the final public domain; use that exact origin for CORS.
+SMTP credentials must never use the `VITE_` prefix.
+
+**Launch blocker:** contact and enquiry submission logging still writes a local
+JSON file before sending mail. This implementation is not durable or suitable
+for Vercel Functions; pointing `SUBMISSIONS_DIR` at `/tmp` is not a persistence
+solution. Migrate submission storage to a managed database before enabling live
+enquiries. SMTP must also be configured and delivery tested. The in-memory rate
+limiter is per instance; use a shared limiter or platform protection for a global
+limit. Catalog browsing does not require writable runtime storage.
+
+Configuration reference: https://vercel.com/docs/services
+and https://vercel.com/docs/services/bindings.
+
 ## Structure
 
 ```text

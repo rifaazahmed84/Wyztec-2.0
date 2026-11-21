@@ -110,7 +110,8 @@ app.get('/sitemap.xml', (_req, res) => {
       `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${base}${u}</loc></url>`).join('')}</urlset>`,
     );
 });
-if (config.production) {
+// Vercel routes frontend traffic to the independently built client service.
+if (config.production && process.env.VERCEL !== '1') {
   const client = path.resolve(fileURLToPath(new URL('../../client/dist', import.meta.url)));
   app.use(express.static(client));
   app.get('*', (_req, res) => res.sendFile(path.join(client, 'index.html')));
@@ -142,3 +143,4 @@ const errors: ErrorRequestHandler = (error, _req, res, _next) => {
   });
 };
 app.use(errors);
+export default app;
