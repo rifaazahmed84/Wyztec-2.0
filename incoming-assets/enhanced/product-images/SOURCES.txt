@@ -1,0 +1,51 @@
+Product image sources
+
+01-jumo-cti-750.jpg (560 x 560 px)
+JUMO CTI-750, matching the blue transmitter, metal flange and cylindrical sensing tip pictured.
+https://www.manualslib.com/manual/790372/Jumo-Cti-750.html
+https://static-data2.manualslib.com/product-images/052/790372/jumo-cti-750-transmitter.jpg
+
+02-jumo-flowmeters.webp (1000 x 1474 px)
+JUMO flowTRANS MAG H01 (406015), a close match for the inline flowmeter card.
+https://www.jumo.group/de/en/products/productdetails/406015
+https://www.jumo.group/de/en/products/productdetails/media_17bbd0b36c56485a90cfe90907d59d880fa20b3c3.webp?width=2000&format=webp&optimize=medium
+
+03-jumo-paperless-recorders.webp (2000 x 1960 px)
+JUMO LOGOSCREEN nt (706581), matching the front panel with the blue control knob.
+https://www.jumo.group/nl/en/products/productdetails/706581
+https://www.jumo.group/nl/en/products/productdetails/media_1c5f8a7201e1c8b3de3d1fc032637c1e9e69c2cdb.webp?width=2000&format=webp&optimize=medium
+
+04-metal-work-solenoid-valve.jpg (843 x 725 px)
+Metal Work Series 70 double 3/2 electro-pneumatic valves, representative of the solenoid valve card.
+https://www.metalwork.org/pneumatic-components/product-news/news-20
+https://www.metalwork.org/saratimages/product_news_image_20.jpg
+
+05-jumo-ph-sensor.webp (284 x 2048 px)
+JUMO tecLine pH (201020), a representative electrode with a black head and glass body.
+https://www.jumo.group/gb/en/products/productdetails/201020
+https://www.jumo.group/gb/en/products/productdetails/media_119e7245de78e4aca2cbb39364dbd926d1f050cbf.webp?width=1600&format=webp&optimize=high
+
+06-jumo-aquis-touch.webp (1600 x 1518 px)
+JUMO AQUIS touch S (202581), a straight-on view of the matching wall-mounted unit.
+https://www.jumo.group/gb/en/products/productdetails/202581
+https://www.jumo.group/gb/en/products/productdetails/media_120e80beefe3fdb491c3d266f3d051360424e17ed.webp?width=1600&format=webp&optimize=high
+
+07-siemens-flameproof-motors.png (926 x 676 px)
+Innomotics XP, formerly Siemens SIMOTICS XP. Representative motor from the manufacturer brochure.
+https://www.innomotics.com/hub/en/portfolio/products/low-voltage-motors/explosion-proof-motors
+https://assets.innomotics.com/image/upload/Innomotics-LVM-portfolio-brochure-en_a9prk2.pdf#page=13
+
+08-siemens-induction-motor.png (823 x 638 px)
+Innomotics GP, formerly Siemens SIMOTICS GP. Representative three-phase induction motor from the manufacturer brochure.
+https://www.innomotics.com/hub/en/portfolio/products/low-voltage-motors/general-purpose-motors
+https://assets.innomotics.com/image/upload/Innomotics-LVM-portfolio-brochure-en_a9prk2.pdf#page=9
+
+09-siemens-ie4-motor.jpg (650 x 650 px)
+SIMOTICS SD / Innomotics IE4. Representative catalog image from the listing for model 1LE5534-3AA63-4AB1-Z L22+L51.
+https://plc-trade.com/mpn/1le5534-3aa63-4ab1-z-l22-l51/
+https://cdn.plc-trade.com/pub/1423283/1le5534-3aa63-4ab1-z-l22-l51.jpg
+
+10-siemens-flange-mounting-motor.png (500 x 500 px)
+Siemens SIMOTICS 1LE1001-0EC03-4FA4 with a B5 flange. Representative product photograph from 247industries.
+https://www.ebay.fr/itm/185377956016
+https://i.ebayimg.com/images/g/x-0AAOSwUtZiUJRd/s-l1600.png

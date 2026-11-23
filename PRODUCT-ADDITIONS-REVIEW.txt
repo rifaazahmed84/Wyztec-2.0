@@ -1,0 +1,53 @@
+PRODUCT ADDITIONS REVIEW
+
+Created: server/src/data/additional-products.ts; client/src/components/ProductModelTable.tsx; scripts/import-additional-product-images.ts; scripts/verify-additional-products.mjs; 21 original images under incoming-assets/product_images/; 21 new WebP copies under client/public/images/products/.
+
+Edited: server/src/data/products.ts (catalog registration and explicit replacements); server/src/repositories/products.ts (legacy slug/ID lookup); client/src/pages/ProductDetail.tsx (approved optional model table); Home.tsx and Products.tsx (catalog totals); server/src/app.test.ts and QA scripts (counts, duplicate and legacy-link checks). Also created server/src/data/product-replacements.ts.
+
+Product | Source under incoming-assets/product_images | WebP under client/public/images/products
+Electromagnetic Flowmeter - flowTRANS MAG H20 | jumo/jumo-flowtrans-mag-h20.jpeg | jumo-flowtrans-mag-h20/1.webp
+Industrial Transmitter - JUMO dTRANS AS 02 | jumo/jumo-dtrans-as-02.jpeg | jumo-dtrans-as-02/1.webp
+Paperless Recorder - JUMO LOGOSCREEN 700 | jumo/jumo-logoscreen-700.jpeg | jumo-logoscreen-700/1.webp
+Thermocouples - JUMO | jumo/jumo-thermocouple-1.jpeg, jumo/jumo-thermocouple-2.jpeg | jumo-thermocouples/1.webp, jumo-thermocouples/2.webp
+IE2 MOTOR | meknoid/marathon-ie2-motor.jpeg | meknoid-marathon-ie2-motor/1.webp
+IE3 MOTOR | meknoid/marathon-ie3-motor.png | meknoid-marathon-ie3-motor/1.webp
+IE4 MOTOR | meknoid/marathon-ie4-motor.jpeg | meknoid-marathon-ie4-motor/1.webp
+CRANE DUTY MOTOR | meknoid/marathon-crane-duty-motor.jpeg | meknoid-marathon-crane-duty-motor/1.webp
+TEFC MOTOR | meknoid/marathon-tefc-motor.png | meknoid-marathon-tefc-motor/1.webp
+SLIP RING MOTOR | meknoid/marathon-slip-ring-motor.jpeg | meknoid-marathon-slip-ring-motor/1.webp
+AXIAL FLOW FAN | meknoid/marathon-axial-flow-fan.png | meknoid-marathon-axial-flow-fan/1.webp
+EXHAUST FAN | meknoid/marathon-exhaust-fan.jpeg | meknoid-marathon-exhaust-fan/1.webp
+CENTRIFUGAL FAN | meknoid/marathon-centrifugal-fan.jpeg | meknoid-marathon-centrifugal-fan/1.webp
+PNEUMATIC CYLINDER | meknoid/metalwork-pneumatic-cylinder.jpeg | meknoid-metalwork-pneumatic-cylinder/1.webp
+FRL UNIT | meknoid/metalwork-frl-unit.jpeg | meknoid-metalwork-frl-unit/1.webp
+PNEUMATIC FITTINGS | meknoid/metalwork-pneumatic-fittings.png | meknoid-metalwork-pneumatic-fittings/1.webp
+HELICAL GEARBOX | meknoid/helical-gearbox.jpeg | meknoid-helical-gearbox/1.webp
+CRANE DUTY GEARBOX | meknoid/crane-duty-gearbox.jpeg | meknoid-crane-duty-gearbox/1.webp
+ALTRA GEARBOX | meknoid/altra-gearbox.jpeg | meknoid-altra-gearbox/1.webp
+BEVEL HELICAL GEARBOX | meknoid/bevel-helical-gearbox.jpeg | meknoid-bevel-helical-gearbox/1.webp
+
+After the content revision on 2026-11-23, all 31 active products have researched descriptions, four key features, four applications, industry tags and selection guidance. See PRODUCT-CONTENT-SOURCES.txt for source links and interpretation limits. Specs remain empty for Group B and dTRANS AS 02; documents and relatedSlugs remain empty for the additions. verified=false because exact configurations and technical ratings are not independently confirmed. All supplied images lowRes=true, consistent with temporary image handling. Internal website IDs WYZ-028 through WYZ-047 are not manufacturer SKUs. No prices, part numbers or certifications were invented.
+
+Assumptions: exact heading Thermocouples - JUMO retained for the single two-image product. Group B uppercase names retained. ALTRA is the brand for ALTRA GEARBOX; other gearboxes use PREMIUM TRANSMISSION. Existing category labels reused. MEKNOID slugs are prefixed meknoid- to avoid collisions with existing records. Following the user review, the 16 MEKNOID records replace their older duplicates in the public catalog. The catalog now contains 31 products. Old slugs and saved enquiry IDs resolve to the newer records. Old image files remain on disk.
+
+Image quality: low-resolution originals remain soft, especially the IE3 MOTOR (184x155), AXIAL FLOW FAN (168x184), ALTRA GEARBOX (208x199) and industrial transmitter (179x282). They are usable as temporary pictures but small printed labels cannot be made reliably legible. The flowmeter source is 1200x800. All images use a white 1200x1200 canvas, contain fit, Lanczos scaling capped at 2x, no cropping/retouching/recolouring. Original backgrounds remain unchanged inside each image; only transparent pixels and canvas padding are white.
+
+Existing component conventions retained: first detail image loads eagerly; cards, thumbnails and subsequent gallery views load lazily. Existing generic section headings and unverified-specification notice remain unchanged. The content revision fills the description, features and applications sections without adding unsupported technical ratings. New model table scrolls internally on mobile. No global CSS or navigation changed. On 2026-11-23, ten matching legacy product images were replaced from the supplied enhanced archive; all extracted sources were retained. Duplicate records are replaced in the displayed catalog; related links point to replacement slugs.
+
+Technical update on 2026-11-23: the supplied Meknoid Industrial Buyer Guide fills the technical tables for 29 matched entries, with family/example qualifications and an expanded thermocouple table. The two generic JUMO flowmeter/recorder listings show model-selection requirements. This supersedes the empty-specification and unchanged-table notes above; see PRODUCT-SPECIFICATIONS-REVIEW.txt. No commit or push has been made. Awaiting diff approval.
+
+Review revision: removed 16 duplicate catalog entries (six motors, three fans, three pneumatic products and four gearboxes), keeping all the newer images and supplied product data. Generic JUMO products remain distinct from the new named models. The catalog total is 31; home/catalog totals, sitemap, related links and QA expectations are updated. No commit or push has been made.
+
+Deduplication validation: production build, lint and all 21 tests pass. Tests cover 31 unique product entries, all 16 legacy URLs and enquiry IDs, canonical related links and a duplicate-free sitemap.
+
+Enhanced image revision (2026-11-23): replaced the following ten existing WebP images using product-images.zip. Catalog data, product names and layout were unchanged by this revision. Originals and source notes are saved under incoming-assets/enhanced/product-images/. Photos remain subject to exact-model confirmation; the provided notes describe several as representative images.
+01-jumo-cti-750.jpg -> client/public/images/products/jumo-jumo-cti-750/1.webp
+02-jumo-flowmeters.webp -> client/public/images/products/jumo-flowmeters/1.webp
+03-jumo-paperless-recorders.webp -> client/public/images/products/jumo-paperless-recorders/1.webp
+04-metal-work-solenoid-valve.jpg -> client/public/images/products/metal-work-solenoid-valve/1.webp
+05-jumo-ph-sensor.webp -> client/public/images/products/jumo-ph-sensor/1.webp
+06-jumo-aquis-touch.webp -> client/public/images/products/jumo-jumo-aquis-touch/1.webp
+07-siemens-flameproof-motors.png -> client/public/images/products/siemens-flameproof-motors/1.webp
+08-siemens-induction-motor.png -> client/public/images/products/siemens-induction-motor/1.webp
+09-siemens-ie4-motor.jpg -> client/public/images/products/siemens-ie4-motor/1.webp
+10-siemens-flange-mounting-motor.png -> client/public/images/products/siemens-flange-mounting-motor/1.webp

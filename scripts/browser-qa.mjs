@@ -79,7 +79,7 @@ try {
     'Shared filter survives reload',
   );
   await page.getByRole('button', { name: 'Clear all filters', exact: true }).click();
-  await page.getByText('27 products found', { exact: true }).waitFor();
+  await page.getByText('31 products found', { exact: true }).waitFor();
   await page.getByRole('searchbox').fill('no-such-product');
   await page.getByRole('heading', { name: 'No matching products.' }).waitFor();
   assert(true, 'Live search has a useful empty state');

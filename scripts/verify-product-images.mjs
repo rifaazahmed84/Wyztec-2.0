@@ -28,7 +28,7 @@ try {
   const response = await page.request.get(`${base}/api/products`);
   assert(response.ok(), 'Catalog API failed');
   const { products } = await response.json();
-  assert(products.length === 27, 'Expected all 27 catalog products');
+  assert(products.length === 31, 'Expected all 31 catalog products');
   for (const viewport of [
     { width: 1440, height: 1000 },
     { width: 390, height: 844 },

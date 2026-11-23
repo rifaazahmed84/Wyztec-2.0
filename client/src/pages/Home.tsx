@@ -56,7 +56,7 @@ export default function Home() {
               description="Explore our range of industrial essentials from trusted global brands."
             />
             <Link to="/products" className="button secondary">
-              View all products <span className="small-count">27</span>
+              View all products <span className="small-count">31</span>
             </Link>
           </div>
           <div className="product-grid">

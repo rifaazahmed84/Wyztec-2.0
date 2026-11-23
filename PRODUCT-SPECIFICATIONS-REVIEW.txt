@@ -1,0 +1,136 @@
+WYZTEC TECHNICAL SPECIFICATION IMPORT
+Date: 2026-11-23
+
+Input supplied by the user
+Meknoid-Industrial-Buyer-Guide.pdf, 14 pages, dated 23 November 2026.
+Preserved at incoming-assets/specifications/Meknoid-Industrial-Buyer-Guide.pdf.
+The source is retained for review and is not published as a website download.
+Original and saved copy SHA-256:
+9d40e54e93472446d7258f7ada333030c265ad0aecb92be150c5374f2dad8755
+
+Implementation
+server/src/data/product-specifications.ts supplies complete replacement spec
+arrays and a specificationNote for all 31 active products. products.ts applies
+them after product-content.ts. The note is displayed above the existing tables.
+The existing optional three-column thermocouple table now carries construction
+details and model-dependent temperature ranges. Product names, IDs, URLs, images,
+brand filters and enquiry behavior are preserved. No commit or push was made.
+
+29 entries have matching family, model or selection data in the guide. This does
+not establish exact purchasable order codes or certify every advertised variant.
+verified remains false. Family maxima, examples and configuration-dependent
+options are labeled explicitly. Values are not merged with old guessed defaults.
+
+Source mapping (printed page numbers)
+3, 13 | meknoid-marathon-ie2-motor | SCA family and 15 kW four-pole example
+3, 13 | meknoid-marathon-ie3-motor | TCA family and six four-pole rating examples
+3, 4, 13 | meknoid-marathon-ie4-motor | QCA family and 15 kW example
+3 | meknoid-marathon-crane-duty-motor | SCV / TCV ranges by pole count
+3 | meknoid-marathon-tefc-motor | Flowpak construction and family limits
+3 | meknoid-marathon-slip-ring-motor | KS construction and selection inputs
+4 | siemens-induction-motor | GP selection data; no exact rating schedule
+4 | siemens-ie4-motor | GP / SD IE4 configurations; no exact rating schedule
+4 | siemens-flange-mounting-motor | B5 / B14 mounting distinctions
+4 | siemens-flameproof-motors | D81.1 XP 1MB1553 / 1MB1563 example only
+5 | meknoid-marathon-axial-flow-fan | Family diameters, poles, power and air delivery
+5 | meknoid-marathon-exhaust-fan | GPN30061 / GPN45063 examples; separate roof range
+5 | meknoid-marathon-centrifugal-fan | Separate air-delivery and pressure maxima
+6 | meknoid-helical-gearbox | SMH1 / SMH2 / SMH3 / SMH4 ratios and torque
+6 | meknoid-bevel-helical-gearbox | SMB2 / SMB3 / SMB4 ratios and torque
+6 | meknoid-crane-duty-gearbox | Premium crane-family limits and selection inputs
+6 | meknoid-altra-gearbox | Premium Altra ALM worm family, sizes and housing split
+7 | meknoid-metalwork-pneumatic-cylinder | ISO 15552 and ISO 6432 distinguished
+7 | meknoid-metalwork-frl-unit | Syntesi element options and assembly selection
+7 | meknoid-metalwork-pneumatic-fittings | R-series pressure limits by material
+7 | metal-work-valve-island | EB 80 protection and post-pulse holding power
+7 | metal-work-solenoid-valve | Series 70 flow by port size at stated test conditions
+8 | jumo-ph-sensor | tecLine pH 201020 family, materials and pressure/temperature scope
+8 | jumo-jumo-aquis-touch | AQUIS touch S 202581; not every AQUIS touch variant
+8 | jumo-jumo-cti-750 | 202756 ranges, compensation and NaOH curves
+8 | jumo-dtrans-as-02 | 202553 base inputs and optional controller/output functions
+9 | jumo-flowtrans-mag-h20 | 406065 flow by DN, accuracy terms and process limits
+10 | jumo-logoscreen-700 | 706530 physical I/O versus recorded signals, supply/options
+11 | jumo-thermocouples | 901020, 901030, 901110, 901120 and 901250
+
+Two model gaps remain
+jumo-flowmeters: the guide supplies MAG H20 data, not a rating schedule for this
+separate general listing (whose representative image is an H01). H20 ratings
+were not copied across. Old unsupported numerical defaults were removed and
+replaced with clearly labeled selection requirements.
+jumo-paperless-recorders: the guide supplies LOGOSCREEN 700 data, not data for
+this separate generic listing (whose representative image is LOGOSCREEN nt).
+Old unsupported numerical defaults were removed. An exact model/order code or
+its datasheet is needed for numerical specifications.
+
+Important transcription decisions
+- Motor current, speed, efficiency, mass and locked-rotor current remain tied
+  to the specified four-pole example; the six TCA schedule rows stay separate.
+- Power, airflow, pressure and torque maxima are not presented as simultaneous.
+- Gearbox torque stays in kNm, not Nm. Worked conveyor calculations are excluded.
+- Series 70 flow keeps its 6 bar supply / 1 bar pressure-drop condition and port
+  mapping. EB 80 0.3 W is holding power after the switching pulse.
+- H20 accuracy includes the fixed velocity term, as in the guide and the linked
+  manufacturer sheet. The previous incomplete 0.5% statement is replaced.
+- LOGOSCREEN physical terminals and internally recorded/interface-fed signals
+  use separate rows. Code 888 is described as optional functionality, not as
+  an unconditional compliance certification.
+- Thermocouple 901120 now includes the supplied lower bound. 901250 separates
+  Type K from J/L limits and keeps the sheath/diameter qualification.
+- The guide identifies ALTRA as Premium Altra ALM; the public listing name and
+  existing brand label are preserved. Exact unit size still needs a nameplate.
+- Market statistics, hypothetical payback, worked force/power examples, supplier
+  contacts and instructions addressed to a buyer are not product specifications
+  and were not imported into the catalog.
+
+Manufacturer references linked by the guide (not all independently revalidated)
+Marathon SCA:
+https://marathon-india-backend.weg.net/uploads/download_file/1748863710download_file.pdf
+Marathon TCA:
+https://marathon-india-backend.weg.net/uploads/download_file/1748863754download_file.pdf
+Marathon QCA:
+https://marathon-india-backend.weg.net/uploads/download_file/1748863972download_file.pdf
+Marathon SCV / TCV:
+https://marathon-india-backend.weg.net/uploads/download_file/1748865698download_file.pdf
+Marathon Flowpak and KS:
+https://www.marathonelectric.in/product-type/tefc-motors
+https://www.marathonelectric.in/product-type/ks-slipring-motors
+Marathon fans and propeller examples:
+https://www.marathonelectric.in/category/marathon-fans
+https://marathon-india-backend.weg.net/uploads/download_file/1790761285download_file.pdf
+Premium SMH / SMB and Altra:
+https://premium-transmission.com/smart-modular-helical/
+https://premium-transmission.com/premium-altra-worm-gearbox/
+Metal Work compact catalog:
+https://www.metalwork.it/media/Download_Bro_Cat/9910701%20MW_compatto_en.pdf
+JUMO tecLine pH, AQUIS touch S, CTI-750, dTRANS AS 02:
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=4714
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=71855
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=3824
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=10779
+JUMO H20 (accuracy and DN ranges independently checked in sheet 406065, page 4):
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=1199809
+JUMO LOGOSCREEN 700:
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=688403
+Thermocouples 901020 / 901030 / 901110 / 901120 / 901250 respectively:
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=5129
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=4291
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=4713
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=5189
+https://www.jumo.net/attachments/JUMO/attachmentdownload?id=4006
+
+The guide also cites third-party-hosted copies of D81.1 and a Premium crane
+brochure. Those data are attributed here to the supplied guide; independent
+verification of the exact current order-code documentation remains outstanding.
+
+Verification
+Production build, TypeScript checks, lint and all 22 tests passed. Browser checks
+passed all 31 detail pages and cards at 375, 768 and 1440 px (93 of each), including
+every specification cell, scope note and thermocouple model cell. All eight
+industry filters, 16 legacy URLs and the enquiry-list action passed. No browser
+console/network errors or page overflow were recorded. After narrowing the model
+column to make room for the longer construction details, the three thermocouple
+layouts and internal scrolling were checked again and the frontend rebuilt.
+There are 254 technical/selection rows and five thermocouple comparison rows.
+The before/after catalog comparison confirms all product identities, images,
+descriptions, features, applications, industry tags and enquiry links are retained.
+Reports: .qa/additional-products-results.json and .qa/buyer-guide/model-table-check.json.

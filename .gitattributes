@@ -1,0 +1,2 @@
+# Preserve source PDFs byte-for-byte; some have text-like headers.
+*.pdf binary

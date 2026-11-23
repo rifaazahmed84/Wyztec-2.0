@@ -10,6 +10,7 @@ import ContactForm from '../components/ContactForm';
 import SEO from '../components/SEO';
 import NotFound from './NotFound';
 import ProductImage, { TemporaryImageBadge } from '../components/ProductImage';
+import ProductModelTable from '../components/ProductModelTable';
 export default function ProductDetail() {
   const { slug } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
@@ -183,19 +184,27 @@ export default function ProductDetail() {
             </section>
             <section id="specifications" className="detail-section">
               <h2>Technical specifications</h2>
-              {!p.verified && (
+              {(p.specificationNote || !p.verified) && (
                 <div className="spec-notice">
                   <Info size={19} />
                   <p>
-                    <strong>Typical selection ranges.</strong> These parameters are unverified and
-                    vary by model. Confirm all ratings, options and approvals against the
-                    manufacturer’s datasheet before ordering.
+                    {p.specificationNote ? (
+                      <>
+                        <strong>Specification scope.</strong> {p.specificationNote}
+                      </>
+                    ) : (
+                      <>
+                        <strong>Typical selection ranges.</strong> These parameters are unverified
+                        and vary by model. Confirm all ratings, options and approvals against the
+                        manufacturer’s datasheet before ordering.
+                      </>
+                    )}
                   </p>
                 </div>
               )}
               <table className="spec-table">
                 <caption className="sr-only">
-                  Typical selection parameters for {p.brand} {p.name}
+                  Technical specifications and selection data for {p.brand} {p.name}
                 </caption>
                 <tbody>
                   {p.specs.map((s) => (
@@ -206,6 +215,7 @@ export default function ProductDetail() {
                   ))}
                 </tbody>
               </table>
+              {p.modelTable && <ProductModelTable name={p.name} table={p.modelTable} />}
             </section>
             <section id="applications" className="detail-section">
               <h2>Applications & industries</h2>

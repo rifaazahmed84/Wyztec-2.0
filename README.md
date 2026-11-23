@@ -85,7 +85,11 @@ client/
   src/styles.css            Design tokens and responsive styles
   src/config.ts             Company details, canonical URL and social profiles
 server/
-  src/data/products.ts       All 27 typed product records and selection parameters
+  src/data/products.ts       Product type and assembled 31-product catalog
+  src/data/additional-products.ts  New product identities, photos and supplied specifications
+  src/data/product-content.ts     Descriptions, features, applications and industry tags
+  src/data/product-specifications.ts  Buyer-guide specifications and model-scope notes
+  src/data/product-replacements.ts Legacy URLs for replaced duplicate products
   src/repositories/          Replaceable data access boundary
   src/submissions.ts         Validation, serialized JSON log, SMTP and acknowledgement
   src/app.ts                 API, security, sitemap and production SPA serving
@@ -120,19 +124,23 @@ Without SMTP configuration, **development** saves a submission and returns `deli
 
 ## Products and technical review
 
-The only catalog source is `server/src/data/products.ts`. It exports the full `Product` type, reusable family defaults and 27 seed entries. Brand + name forms the stable URL slug. The repository module provides the API boundary for a future database adapter.
+`server/src/data/products.ts` exports the full `Product` type and assembles the active catalog. It combines the original seeds with `additional-products.ts`, resolves the 16 replacements in `product-replacements.ts`, and applies the editorial fields from `product-content.ts` and technical fields from `product-specifications.ts`. There are 31 active products. Existing URLs and enquiry IDs for replaced products resolve to the newer records. The repository module provides the API boundary for a future database adapter.
+
+Edit descriptions, card taglines, key features, applications, industry tags and selection guidance in `server/src/data/product-content.ts`, using the active product slug as the key. All 31 entries have four features and four applications; the detail page displays up to four applications. Use the existing industry names from `client/src/data/taxonomy.ts` so filters remain consistent. Manufacturer sources and model-specific limits are documented in [PRODUCT-CONTENT-SOURCES.txt](PRODUCT-CONTENT-SOURCES.txt).
+
+Edit current specifications in `server/src/data/product-specifications.ts`. Each entry replaces the old defaults in full and includes a `specificationNote` explaining its model or family scope. The supplied buyer guide supports 29 entries; generic Flowmeters and Paperless Recorders still require their own model data and show selection requirements instead of guessed numerical ratings. [PRODUCT-SPECIFICATIONS-REVIEW.txt](PRODUCT-SPECIFICATIONS-REVIEW.txt) maps products to guide pages and records qualifications. The source PDF is preserved under `incoming-assets/specifications/` for review, not served as a public download. Keep test conditions, units and variant limits with each value; do not change `verified` merely because a family figure was supplied.
 
 To add a product:
 
-1. Add a seed with `name`, `brand`, `category`, `family`, `use`, industry mapping and product-specific parameters. Shared defaults are spread before per-product overrides.
-2. Use a new family or an explicit object if the product does not match an existing type. Add real photos to `client/public/images` and update `images` with meaningful alt text.
+1. Add an entry in `server/src/data/additional-products.ts` with an unused ID, unique stable slug, exact name, brand and category. Add the matching `product-specifications.ts` entry with supplied model data and a scope note; do not infer ratings from a photo or an unrelated family. Keep new products distinct from replacements; map an old slug in `product-replacements.ts` only when deliberately replacing that record.
+2. Add a matching entry in `product-content.ts` with a specific overview, short tagline, four features, four applications, relevant industry tags and selection guidance. Record the source and any model limitations in `PRODUCT-CONTENT-SOURCES.txt`. Add photos under `client/public/images/products/<slug>/` or use the official-image workflow below, with descriptive alt text.
 3. Add actual document files under `client/public/documents` and their URLs to `documents`. Keep this list empty until those files exist; no download controls are displayed for an empty list.
-4. Supply related slugs as needed, and review the generated overview, features, applications and selection guide.
+4. Supply active related slugs as needed. Update the visible catalog totals and QA count expectations when adding or removing records, then run `npm run typecheck`, `npm run lint`, `npm test` and `npm run build`. With the dev server running, set `QA_URL` to its frontend address and run `node scripts/verify-additional-products.mjs` to review descriptions, images, filters and layouts at phone, tablet and desktop widths.
 5. Validate the **exact model** against its manufacturer datasheet before setting `verified: true`. Rebuild and run tests; update catalog counts and the completeness test when the catalog size changes.
 
-Every seeded record has `verified: false` and a TODO comment. Technical tables display **typical, unverified selection ranges**. They do not establish stock availability, guaranteed performance, hazardous-area certification or compatibility. The flameproof entry specifically requires the exact approval documents. “Altra Gearbox” is retained from the flyer, with manufacturer / series identification explicitly pending.
+Every active record remains `verified: false`. Technical tables now distinguish supplied family/model references, worked rating examples and selection requirements through their scope notes. They do not establish stock availability, guaranteed performance, hazardous-area certification or compatibility. The flameproof entry requires the exact approval documents. The buyer guide identifies the Altra ALM worm family, while the individual unit size and order code still need confirmation.
 
-The brochure supplies product names only. It does not substantiate detailed specifications. Initial technical reference points included [JUMO CTI-750 documentation](https://www.jumo.net/attachments/JUMO/attachmentdownload?id=3168) and [Metal Work ISO cylinder documentation](https://www.metalwork.it/media/Download_Bro_Cat/ISO-15552-MCR-IT.pdf); all product models and options still require manufacturer review.
+The original flyer supplied product names; the later 14-page buyer guide supplies the technical references now used. Its ratings and examples are mapped in `PRODUCT-SPECIFICATIONS-REVIEW.txt`. All quoted order codes and options still require manufacturer review for the actual application.
 
 ## Assets and company configuration
 
@@ -207,7 +215,7 @@ Security uses Helmet with a self-only script policy, explicit map iframe origins
 
 ## Verification
 
-`npm test` runs client interaction tests and Supertest API tests. These check completeness of all 27 records, combined filters, every detail endpoint, security headers, validation, spam handling, rate limiting, concurrent logging, SMTP success/failure, form recovery, persisted-basket parsing, and drawer focus restoration.
+`npm test` runs client interaction tests, Supertest API tests and image-pipeline tests. These check completeness of all 31 active records, editorial coverage, legacy product URLs, combined filters, every detail endpoint, security headers, validation, spam handling, rate limiting, concurrent logging, SMTP success/failure, form recovery, persisted-basket parsing, and drawer focus restoration.
 
 For browser QA, start `npm run dev`, install Chrome, then run:
 

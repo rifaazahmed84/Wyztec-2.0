@@ -1,4 +1,5 @@
-import { products } from '../data/products.js';
+import { products, productIdAliases } from '../data/products.js';
+import { productSlugAliases } from '../data/product-replacements.js';
 export type ProductQuery = {
   q?: string;
   brand?: string;
@@ -23,8 +24,8 @@ export const productRepository = {
     else if (query.sort === 'name-asc') result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
   },
-  bySlug: (slug: string) => products.find((p) => p.slug === slug),
-  byId: (id: string) => products.find((p) => p.id === id),
+  bySlug: (slug: string) => products.find((p) => p.slug === (productSlugAliases[slug] ?? slug)),
+  byId: (id: string) => products.find((p) => p.id === (productIdAliases[id] ?? id)),
   categories: () => [...new Set(products.map((p) => p.category))],
   brands: () => [...new Set(products.map((p) => p.brand))],
 };

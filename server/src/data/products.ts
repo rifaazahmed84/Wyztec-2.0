@@ -1,3 +1,8 @@
+import { additionalProducts } from './additional-products.js';
+import { productSlugAliases } from './product-replacements.js';
+import { productContent } from './product-content.js';
+import { productSpecifications } from './product-specifications.js';
+
 export type Product = {
   id: string;
   slug: string;
@@ -16,6 +21,8 @@ export type Product = {
   documents?: { label: string; url: string }[];
   relatedSlugs?: string[];
   verified: boolean;
+  specificationNote?: string;
+  modelTable?: { headings: [string, string, string]; rows: [string, string, string][] };
 };
 type Family = 'motor' | 'fan' | 'gearbox' | 'pneumatic' | 'instrument';
 type Seed = {
@@ -393,7 +400,7 @@ export const slugify = (value: string) =>
 const productImageOverrides: Record<string, Pick<Product, 'images' | 'lowRes'>> = {};
 // TODO: Validate EVERY range, feature and option against the exact manufacturer model / datasheet.
 // These are application planning ranges, not guaranteed specifications or Wyztec stock claims.
-export const products: Product[] = seeds.map((s, i) => {
+const originalProducts: Product[] = seeds.map((s, i) => {
   const industries = s.industries ?? (s.family === 'instrument' ? all.slice(1, 5) : all);
   const slug = slugify(`${s.brand}-${s.name}`);
   return {
@@ -443,3 +450,29 @@ export const products: Product[] = seeds.map((s, i) => {
       .map((other) => slugify(`${other.brand}-${other.name}`)),
   };
 });
+
+const additions = additionalProducts.map((product) => ({
+  ...product,
+  ...productImageOverrides[product.slug],
+}));
+const byNewSlug = new Map(additions.map((product) => [product.slug, product]));
+const replacedSlugs = new Set(Object.values(productSlugAliases));
+export const productIdAliases: Record<string, string> = {};
+
+// Keep the newer product in the old catalog position, without duplicate cards.
+export const products: Product[] = [
+  ...originalProducts.map((product) => {
+    const target = productSlugAliases[product.slug];
+    if (!target) return product;
+    const replacement = byNewSlug.get(target);
+    if (!replacement) throw new Error(`Missing replacement product: ${target}`);
+    productIdAliases[product.id] = replacement.id;
+    return replacement;
+  }),
+  ...additions.filter((product) => !replacedSlugs.has(product.slug)),
+].map((product) => ({
+  ...product,
+  ...productContent[product.slug],
+  ...productSpecifications[product.slug],
+  relatedSlugs: product.relatedSlugs?.map((slug) => productSlugAliases[slug] ?? slug),
+}));

@@ -1,0 +1,135 @@
+WYZTEC PRODUCT CONTENT REVIEW
+Reviewed: 2026-11-23
+
+Scope
+All 31 active products now have an individual tagline, overview, four key features,
+four applications, relevant industry tags and a practical selection guide.
+Content is maintained in server/src/data/product-content.ts and applied to the
+final deduplicated catalog in products.ts. Adding a new product also requires an
+editorial entry keyed by its active slug; the API tests check complete coverage.
+
+Evidence and interpretation
+Manufacturer pages below support product-family or named-model descriptions.
+Application examples and the site's eight industry categories are editorial
+mappings of those capabilities, not manufacturer certifications or a statement
+that every variant is suitable for every environment. Exact duty and configuration
+still need selection. No new numerical performance ratings, warranty promises,
+stock claims, certificates or guaranteed savings have been added.
+
+Identity and images were kept. The subsequent buyer-guide import replaces the
+old specification defaults and expands the thermocouple model table; see
+PRODUCT-SPECIFICATIONS-REVIEW.txt for current data and scope. Neither editorial
+copy nor a family range certifies an exact order code. Brand and series details
+cannot be established from photos alone.
+
+MARATHON MOTORS
+meknoid-marathon-ie2-motor
+https://www.marathonelectric.in/product-type/ie2-efficiency-motors
+meknoid-marathon-ie3-motor
+https://www.marathonelectric.in/product-type/ie3-efficiency-motors
+meknoid-marathon-ie4-motor
+https://www.marathonelectric.in/product-type/ie4-efficiency-motors
+The SCA, TCA and QCA family references describe manufacturer ranges, not a claim
+that the supplied representative image identifies the exact motor being offered.
+
+meknoid-marathon-crane-duty-motor
+https://www.marathonelectric.in/solution/crane
+https://www.marathonelectric.in/downloads
+meknoid-marathon-tefc-motor
+https://www.marathonelectric.in/category/medium-voltage-motors
+meknoid-marathon-slip-ring-motor
+https://www.marathonelectric.in/product-type/ks-slipring-motors
+Additional application context:
+https://www.marathonelectric.in/brand/marathon
+
+MARATHON FANS
+meknoid-marathon-axial-flow-fan
+https://www.marathonelectric.in/product-type/axial-flow-fan
+meknoid-marathon-exhaust-fan
+https://www.marathonelectric.in/product-type/propeller-fans
+meknoid-marathon-centrifugal-fan
+https://www.marathonelectric.in/category/marathon-fans
+General ventilation descriptions deliberately do not transfer smoke-extraction
+or explosion-protection ratings from specialized variants to these family listings.
+
+SIEMENS MOTOR LISTINGS
+siemens-induction-motor
+https://www.innomotics.com/hub/en/portfolio/products/low-voltage-motors
+siemens-ie4-motor
+https://assets.innomotics.com/image/upload/Innomotics-LVM-portfolio-brochure-en_a9prk2.pdf
+siemens-flange-mounting-motor
+https://www.innomotics.com/hub/en/portfolio/products/low-voltage-motors/general-purpose-motors
+siemens-flameproof-motors
+https://www.innomotics.com/hub/en/portfolio/products/low-voltage-motors/explosion-proof-motors
+Existing Siemens catalog labels are retained. Current Innomotics portfolio pages
+are used for family-level context, not to establish an exact Siemens order code.
+Only the flameproof family is tagged Oil & Gas; general-purpose motors have more
+specific utility/production mappings. Hazardous-area suitability is not implied
+by a generic industry tag or transferred between motor families.
+
+GEARBOXES
+meknoid-helical-gearbox
+https://www.premium-transmission.com/standard-helical/
+meknoid-bevel-helical-gearbox
+https://www.premium-transmission.com/bevel-helical-geared-motor/
+meknoid-crane-duty-gearbox
+User-supplied brochure establishes the listing. General selection guidance only;
+no exact crane-duty series, torque capacity or hoisting approval was supplied.
+Manufacturer context for crane travel and material-handling drive applications:
+https://www.premium-transmission.com/bevel-helical-geared-motor/
+meknoid-altra-gearbox
+The later user-supplied buyer guide identifies Premium Altra ALM worm gearboxes.
+The technical table now presents that family with its scope note; the exact unit
+size and order code remain subject to confirmation. See the specifications review.
+
+METAL WORK PNEUMATICS
+meknoid-metalwork-pneumatic-cylinder
+https://www.metalwork.it/media/Doc/MW_Pneumatica-macchine-utensili_EN-w.pdf
+https://www.metalwork.it/media/Download_Bro_Cat/9910701%20MW_compatto_en.pdf
+meknoid-metalwork-frl-unit
+https://www.metalwork.it/pneumatic-components/metal-work-frl-units-0066085.html
+meknoid-metalwork-pneumatic-fittings
+https://www.metalwork.it/pneumatic-components/Fittings-0066049.html
+metal-work-valve-island
+https://www.metalwork.it/media/Doc/MW_Pneumatica-macchine-utensili_EN-w.pdf
+metal-work-solenoid-valve
+https://www.metalwork.it/componenti-pneumatici/Valves-0005578.html
+Food-industry use is an application context. Food-contact, washdown and material
+approvals must be checked for the actual fitting, actuator or valve selected.
+
+JUMO INSTRUMENTATION
+jumo-ph-sensor
+https://www.jumo.group/de/en/products/productdetails/201020
+jumo-jumo-aquis-touch
+https://www.jumo.group/de/en/products/productdetails/202581
+jumo-jumo-cti-750
+https://www.jumo.group/de/en/products/productdetails/202756
+jumo-flowmeters
+https://www.jumo.group/ua/uk/products/productdetails/406015
+jumo-paperless-recorders
+https://www.jumo.group/de/en/products/productdetails/706581
+These generic listings are not renamed to the representative image's specific
+model. The LOGOSCREEN nt reference is archived; no current availability claim is
+made. Generic flowmeters and recorders stay distinct from the named models below.
+
+jumo-flowtrans-mag-h20
+https://www.jumo.group/de/en/products/productdetails/406065
+https://www.jumo.group/ba/en/about-us/news/press/2023/2314
+jumo-dtrans-as-02
+https://www.jumo.group/cz/en/products/productdetails/202553
+jumo-logoscreen-700
+https://www.jumo.group/fr/en/products/productdetails/706530
+jumo-thermocouples
+https://www.jumo.net/attachments/JUMO/attachmentdownload?filename=PR_90024_EN.pdf&id=4349
+The named models use manufacturer descriptions. Options are identified as
+configuration-dependent. The thermocouple ranges already supplied by the user
+remain unchanged; the selected complete probe must suit the process conditions.
+
+Review status
+Production build, lint and TypeScript checks passed. All 21 API, UI and image
+pipeline tests passed. Browser verification passed 93 detail-page checks and
+93 catalog-card checks across 375px, 768px and 1440px widths, plus all eight
+industry filters, legacy URLs and the enquiry-list action. No horizontal overflow
+or browser console/network errors were recorded. Report: .qa/additional-products-results.json.
+No commit or push was made by this revision. This is a catalog content update,
+not verification of exact order codes or production enquiry delivery/storage.

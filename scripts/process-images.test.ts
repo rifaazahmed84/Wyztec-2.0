@@ -36,7 +36,7 @@ describe('Official product image pipeline', () => {
     const f = await fixture();
     const report = await processImages({ projectRoot: f.root });
     expect(report.processed).toBe(0);
-    expect(report.remaining).toHaveLength(27);
+    expect(report.remaining).toHaveLength(products.length);
     expect(await readFile(f.data, 'utf8')).toBe(f.source);
   });
   it('creates a white 1200px square without upscaling and updates only matching image metadata', async () => {
@@ -44,7 +44,7 @@ describe('Official product image pipeline', () => {
     const p = products[0];
     await image(path.join(f.incoming, `${p.slug}_1.png`));
     const report = await processImages({ projectRoot: f.root });
-    expect(report.remaining).toHaveLength(26);
+    expect(report.remaining).toHaveLength(products.length - 1);
     expect(report.remaining).not.toContain(p.slug);
     const file = path.join(f.root, `client/public/images/products/${p.slug}/1.webp`);
     const buffer = await readFile(file);
@@ -82,7 +82,7 @@ describe('Official product image pipeline', () => {
     expect(await readFile(f.data, 'utf8')).toBe(first);
     await image(path.join(f.incoming, `${products[1].slug}_1.png`));
     const report = await processImages({ projectRoot: f.root });
-    expect(report.remaining).toHaveLength(25);
+    expect(report.remaining).toHaveLength(products.length - 2);
     expect(await readFile(f.data, 'utf8')).toContain(`${p.slug}/10.webp`);
   });
   it('rejects an unknown slug before writing output or metadata', async () => {
