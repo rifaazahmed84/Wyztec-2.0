@@ -118,7 +118,10 @@ export const database = {
   },
   async saveQuote(args: SaveArguments): Promise<SaveResult> {
     const { data, error } = await getDatabaseClient().rpc('save_quote_request', args);
-    if (error || !data) throw new Error('Quote database save failed');
+    if (error || !data) {
+  console.error('Supabase quote error code:', error?.code);
+  throw new Error('Quote database save failed');
+}
     return data as SaveResult;
   },
   async setNotification(id: string, status: 'sent' | 'failed' | 'not_configured') {
