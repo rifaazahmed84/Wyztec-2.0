@@ -15,11 +15,14 @@
     "lint": "eslint client/src server/src",
     "format": "prettier --write client/src server/src README.md",
     "test:browser": "node scripts/browser-qa.mjs",
+    "test:quotes:browser": "node scripts/verify-quotes.mjs",
     "test:lighthouse": "node scripts/lighthouse.mjs",
     "optimize:images": "node scripts/optimize-images.mjs",
     "process:images": "tsx scripts/process-images.ts",
     "test:images": "vitest run --root scripts process-images.test.ts",
-    "verify:images": "node scripts/verify-product-images.mjs"
+    "verify:images": "node scripts/verify-product-images.mjs",
+    "db:catalog": "tsx server/src/scripts/import-products.ts",
+    "db:check": "tsx server/src/scripts/check-supabase.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
@@ -37,5 +40,9 @@
   },
   "engines": {
     "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.2"
   }
 }

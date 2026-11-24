@@ -1,0 +1,266 @@
+WYZTEC: SUPABASE CATALOG AND QUOTE WORKFLOW
+=========================================
+
+Repository: React 18 + Vite + TypeScript, npm workspaces, Express API.
+Hosting: one Vercel project at the repository root. vercel.json routes /api/*
+to api/index.mjs, which exports server/dist/app.js. The frontend uses /api
+on the same domain. This is not a static-only deployment.
+
+No Supabase Edge Function is required. The existing Vercel Node function
+handles validation and persistence. Do not run "supabase functions deploy".
+
+1. WHAT IS IMPLEMENTED
+
+- Versioned migration: supabase/migrations/20261124000100_catalog_and_quotes.sql
+- Public products table with a published-only SELECT policy and no browser writes.
+- Private quote_requests and quote_request_items tables, RLS enabled and browser
+  grants revoked. Customer enquiries are never exposed by a public GET route.
+- Staff use Supabase Dashboard project access, not ordinary Supabase Auth users.
+- Product IDs, slugs, categories, brands, images, specs and legacy aliases remain.
+- Product quote buttons link to the existing form with the product selected.
+  The detail form now includes quantity; the basket still supports multiple items.
+- POST /api/enquiries and /api/contact require an Idempotency-Key UUID header.
+  New saves return HTTP 201; matching retries return HTTP 200 and the same
+  { ok: true, reference: "WYZ-..." }. Reusing a key with changed data returns 409.
+- A Postgres transaction saves the request and all product snapshots together.
+  Products are checked for publication inside that transaction. No receipt is
+  shown until the API confirms a committed database save.
+- Five new accepted requests per IP per 60-second window, shared across all API
+  instances by quote_rate_limits. Successful retries do not consume the quota.
+  IP addresses are HMACed; IPv6 addresses are grouped by /64. Old buckets expire
+  and are pruned during accepted requests. No raw IPs are stored.
+- Vercel's overwritten X-Forwarded-For identifies visitors. On other hosts the
+  socket address is used; configure a trusted proxy integration before moving
+  to a different reverse-proxy platform. Do not blindly trust visitor headers.
+- Browser retries retain values and the submission key, including lost responses.
+  Only the key and a payload digest are kept in sessionStorage, not customer data.
+- Nodemailer notifies the fixed SALES_EMAIL after saving. No customer-supplied
+  destination is used. An SMTP failure does not turn a saved enquiry into an error.
+  Notifications are attempted once; retries don't send duplicate messages.
+
+2. VARIABLES AND ACCOUNT ACCESS
+
+Locally, use the repository-root .env (copy .env.example if it doesn't exist).
+Do not overwrite an existing .env. It is gitignored. Never commit or paste keys.
+
+SUPABASE_URL
+  Project Settings > Data API > Project URL.
+  Current intended project: https://hzzkcsdjmkkvzjgtikfk.supabase.co
+
+SUPABASE_PUBLISHABLE_KEY
+  Project Settings > API Keys > Publishable key.
+  Used for published catalog reads. Also used by the read-only db:check script.
+
+SUPABASE_SECRET_KEY
+  Project Settings > API Keys > Secret key (sb_secret_...).
+  Server only. The legacy service_role key also works in this variable if the
+  project has not adopted secret keys. Do NOT use a publishable/anon key here.
+  This key saves quotes and imports products; it must never have a VITE_ prefix.
+
+QUOTE_RATE_LIMIT_SECRET
+  A randomly generated value of at least 32 characters. It was generated locally
+  without printing it. Copy the same value from the local .env to each instance
+  of this deployment. Use separate values for separate staging/production apps.
+
+SITE_URL
+  Public website origin, e.g. https://wyztec-2-0.vercel.app. Used by the sitemap.
+
+CORS_ORIGIN
+  Exact website origins separated by commas. Local example:
+  http://localhost:5173,http://127.0.0.1:5173
+  Production: https://wyztec-2-0.vercel.app (add the custom domain when active).
+
+VITE_SITE_URL
+  Public build-time value, matching SITE_URL. Locally place it in
+  client/.env.local or client/.env.production (see client/.env.example).
+  On Vercel put it in Project Settings > Environment Variables.
+  No Supabase/SMTP credentials belong in client/ or a VITE_ variable.
+
+SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, SMTP_FROM, SALES_EMAIL
+  Existing optional sales-mail integration. Get these from the approved email
+  provider. SMTP_FROM must be an approved sender. SALES_EMAIL defaults to
+  sales@wyztec.com and cannot be changed by a form submission.
+  Missing SMTP leaves the enquiry saved with notification_status=not_configured.
+  Use an approved test mailbox in staging; never send test customer emails blindly.
+
+Vercel: place SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY,
+QUOTE_RATE_LIMIT_SECRET, SITE_URL, CORS_ORIGIN, VITE_SITE_URL and optional SMTP
+variables in Project Settings > Environment Variables. Mark secrets sensitive
+where supported. Choose the appropriate environment: use a separate Supabase
+project for Preview/staging and the production project for Production.
+Redeploy after changing variables. Do not set SUPABASE_ACCESS_TOKEN in Vercel;
+that is a personal CLI management credential, not an application credential.
+PORT, HOST and NODE_ENV do not need Vercel overrides.
+
+Account access needed:
+- Supabase project owner/admin access for API keys, migrations and staff invites.
+- Supabase CLI login (personal access token) and, when prompted, the database
+  password. The project URL/publishable key cannot execute SQL migrations.
+- Vercel project access for environment variables, linking and deployment.
+- Approved SMTP credentials for real email-delivery verification.
+
+3. LOCAL DATABASE AND TESTS (NO PRODUCTION CHANGES)
+
+From the repository root in PowerShell:
+
+  npm.cmd ci --include=dev
+  npm.cmd run typecheck
+  npm.cmd run lint
+  npm.cmd test
+  npm.cmd run build
+  npm.cmd run db:catalog
+  npm.cmd run test:quotes:browser
+
+The default catalog command audits the source data and writes
+CATALOG-IMPORT-REPORT.json. It does not contact or write to Supabase.
+Tests use isolated embedded PostgreSQL (PGlite), the actual SQL migration,
+anon/authenticated/service_role roles, HTTP API tests and mocked SMTP. They do
+not read the local .env, contact production or send email.
+The quote browser test requires installed Google Chrome. It serves the compiled
+site on an ephemeral local port and checks desktop/mobile product selection and
+a lost-response retry against isolated PostgreSQL, then closes its server.
+
+To run a complete local Supabase stack, install Docker Desktop and start it:
+
+  npx.cmd --yes supabase@latest start
+  npx.cmd --yes supabase@latest db push
+
+These commands target LOCAL PostgreSQL by default in CLI v3. Check the Target
+line. The checked-in supabase/config.toml defines local API port 54321.
+Put the LOCAL URL and local publishable/secret keys in root .env. CLI status
+can display local keys; do not paste its output into chat or commit it.
+
+  npm.cmd run db:catalog -- --apply
+  npm.cmd run db:check
+  npm.cmd run dev
+
+The Vite site normally uses http://127.0.0.1:5173, proxying API requests to 3001.
+With no Supabase configuration, development can preview static catalog data;
+quote submission returns a recoverable error and cannot claim a successful save.
+Once configured, database failures never silently fall back to static catalog data.
+Production requires a working database and the rate-limit secret.
+
+4. HOSTED MIGRATION AND INITIAL IMPORT — APPROVAL REQUIRED
+
+Do not execute these hosted changes until the owner approves the project and
+migration. Review the SQL first. If the project has existing tables with the same
+names or migration history, reconcile them before applying; do not reset/drop it.
+Use a staging project first. Never run db reset --remote on production.
+
+Read-only authentication/linking and preview (requires account access):
+
+  npx.cmd --yes supabase@latest login
+  npx.cmd --yes supabase@latest link --project-ref hzzkcsdjmkkvzjgtikfk
+  npx.cmd --yes supabase@latest migration list --remote
+  npx.cmd --yes supabase@latest db push --remote --dry-run
+
+AFTER explicit migration approval:
+
+  npx.cmd --yes supabase@latest db push --remote
+
+Review its Target and confirmation. Use the migration file as-is; the CLI records
+its version. If your organization requires the SQL Editor instead, run the whole
+file in an approved SQL Editor session and reconcile migration history with the
+CLI before future pushes. Do not apply the same migration twice.
+
+With root .env pointing to that approved project and the server key present,
+AFTER approval for importing the existing 31 catalog products:
+
+  npm.cmd run db:catalog -- --apply --confirm-project-ref hzzkcsdjmkkvzjgtikfk
+  npm.cmd run db:check
+
+The import inserts missing product IDs, with published=true for the existing
+catalog. Repeating it skips existing IDs: staff edits, draft status and existing
+quote requests are preserved. It never truncates or deletes products. Slug
+collisions with unrelated existing IDs fail instead of overwriting those records.
+db:check makes only anonymous, zero-row read requests and prints no keys or
+customer data. It expects published catalog access and denied private-table reads.
+
+5. FUNCTION AND WEBSITE DEPLOYMENT — SEPARATE APPROVAL REQUIRED
+
+Deploy from the REPOSITORY ROOT as ONE Vercel project:
+
+  Root Directory: repository root (blank)
+  Framework: Vite
+  Install: npm ci --include=dev
+  Build: npm run build
+  Output: client/dist
+
+Keep vercel.json. It builds both workspaces and deploys api/index.mjs alongside
+the frontend; function maxDuration is 60 seconds. No separate Edge Function,
+Services project, API hostname, public secret or internal service binding is needed.
+
+After Vercel login/linking and configuring Preview variables for staging:
+
+  npx.cmd vercel@latest login
+  npx.cmd vercel@latest link
+  npx.cmd vercel@latest deploy
+
+This creates a hosted preview, so obtain deployment approval before running it.
+AFTER production deployment approval and configuring Production variables:
+
+  npx.cmd vercel@latest deploy --prod
+
+A push to the repository's production branch may also auto-deploy; don't push
+these changes until that live deployment has been approved.
+
+Verify the approved deployment:
+- /api/health returns 200 only when the catalog, private table and limiter config
+  are available. No secrets or customer data are included in health responses.
+- All 31 product URLs, existing image URLs, categories/brands and sitemap work.
+- Request a quote from a card; check the selected product and quantity in the form.
+- Submit a clearly marked QA request only to an approved staging/test inbox.
+- Check one quote_requests row plus its quote_request_items in the Dashboard.
+- Retry the identical body with the SAME Idempotency-Key: same reference, one row.
+- Invalid email/quantity and unpublished product: HTTP 400, no enquiry created.
+- Direct anonymous enquiry reads/product writes denied; npm tests exercise this
+  on PostgreSQL roles. Run db:check against the project for deployed read grants.
+- Simulated SMTP failure still returns the saved receipt; staff can see failed.
+- Mobile layout, keyboard form use, loading and failure states remain usable.
+
+6. STAFF REVIEW AND ADDING PRODUCTS
+
+Invite only authorized staff to the Supabase project using appropriate project
+roles and MFA. Do not share the server key or treat a regular Auth signup as staff.
+This version intentionally has no public admin route or custom admin login.
+
+Dashboard > Table Editor > quote_requests:
+  Review submitted_at, public_reference, name, email, company, phone, requirements.
+  Change status from new to in_progress, quoted or closed; add staff_notes.
+  Open the related quote_request_items rows for IDs, names, quantity and notes.
+  Product names/brands/slugs are snapshots from the time of the request.
+  Review notification_status=failed, pending or not_configured manually. Pending
+  can mean the process stopped after saving or the status update failed; verify
+  the mailbox before resending. Sales should review this inbox independently of mail.
+  Define a retention/deletion policy for customer details. Deleting a quote
+  cascades to its items. No public lookup by reference exposes these details.
+
+Dashboard > Table Editor > products:
+  Duplicate a suitable row or insert a row with a new unique id and slug.
+  Fill name, brand, category, tagline, overview, arrays for industries/features/
+  applications, specs=[{"label":"...","value":"..."}], and images=[{"src":
+  "/images/products/your-slug/1.webp","alt":"Descriptive product text"}].
+  Keep the existing JSON shape for optional documents and model_table. Use the
+  existing industry names. Match category and brand spelling for consistent filters.
+  Put images in client/public/images/products/<slug>/ and deploy those assets
+  before publishing the row. Existing image paths remain unchanged. No migration
+  to Supabase Storage is needed in this version.
+  Keep published=false while drafting; set true when the content and image are
+  ready. Catalog/filter/sitemap changes are read from Supabase without rebuilding
+  the website. Changing local seed files alone does NOT update existing DB rows.
+  Unpublish instead of deleting products referenced by historical requests.
+  Keep existing IDs/slugs stable; the 16 prior legacy aliases remain supported.
+
+7. CURRENT DATA REVIEW
+
+CATALOG-IMPORT-REPORT.json lists every item requiring review. At implementation:
+31 products; no missing required fields or local image files. All 31 retain the
+existing lowRes=true and verified=false flags, and all lack downloadable
+manufacturer datasheets. Do not present these as newly manufacturer-certified.
+The supplied buyer-guide specifications, model tables and scope notes are preserved.
+
+References:
+https://supabase.com/docs/guides/database/postgres/row-level-security
+https://supabase.com/docs/guides/getting-started/api-keys
+https://supabase.com/docs/guides/deployment/database-migrations
+https://vercel.com/docs/headers/request-headers

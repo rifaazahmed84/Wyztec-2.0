@@ -1,13 +1,20 @@
 import express, { type ErrorRequestHandler } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { productRepository as repo } from './repositories/products.js';
-import { contactSchema, enquirySchema, submit } from './submissions.js';
+import {
+  contactSchema,
+  enquirySchema,
+  submit,
+  idempotencySchema,
+  clientRateKey,
+  SubmissionError,
+} from './submissions.js';
+import { database } from './database.js';
 export const app = express();
 app.disable('x-powered-by');
 app.use(
@@ -24,7 +31,16 @@ app.use(
 );
 app.use(cors({ origin: (origin, done) => done(null, !origin || config.origins.includes(origin)) }));
 app.use(express.json({ limit: '32kb' }));
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+app.get('/api/health', async (_req, res, next) => {
+  try {
+    await database.health();
+    if (!process.env.QUOTE_RATE_LIMIT_SECRET || process.env.QUOTE_RATE_LIMIT_SECRET.length < 32)
+      throw new Error('Quote rate limiting is not configured');
+    res.json({ status: 'ok' });
+  } catch (error) {
+    next(error);
+  }
+});
 const querySchema = z.object({
   q: z.string().max(200).optional(),
   brand: z.string().max(100).optional(),
@@ -32,83 +48,90 @@ const querySchema = z.object({
   industry: z.string().max(100).optional(),
   sort: z.enum(['featured', 'name-asc', 'name-desc', 'brand']).optional(),
 });
-app.get('/api/products', (req, res, next) => {
+app.get('/api/products', async (req, res, next) => {
   try {
-    res.json({ products: repo.list(querySchema.parse(req.query)) });
+    res.json({ products: await repo.list(querySchema.parse(req.query)) });
   } catch (e) {
     next(e);
   }
 });
-app.get('/api/products/:slug', (req, res) => {
-  const product = repo.bySlug(req.params.slug);
-  if (!product)
-    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Product not found' } });
-  res.json({ product });
-});
-app.get('/api/categories', (_req, res) => res.json({ categories: repo.categories() }));
-app.get('/api/brands', (_req, res) => res.json({ brands: repo.brands() }));
-const limit = rateLimit({
-  windowMs: 60000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  handler: (_req, res) =>
-    res.status(429).json({
-      error: { code: 'RATE_LIMIT', message: 'Too many requests. Please try again in a minute.' },
-    }),
-});
-app.post('/api/contact', limit, async (req, res, next) => {
+app.get('/api/products/:slug', async (req, res, next) => {
   try {
-    const body = contactSchema.parse(req.body);
-    if (body.website) return res.json({ ok: true });
-    const receipt = await submit('contact', body);
-    res.status(201).json({ ok: true, ...receipt });
-  } catch (e) {
-    next(e);
+    const product = await repo.bySlug(req.params.slug);
+    if (!product)
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Product not found' } });
+    res.json({ product });
+  } catch (error) {
+    next(error);
   }
 });
-app.post('/api/enquiries', limit, async (req, res, next) => {
+app.get('/api/categories', async (_req, res, next) => {
   try {
-    const body = enquirySchema.parse(req.body);
-    if (body.website) return res.json({ ok: true });
-    if (body.items.some((i) => !repo.byId(i.productId)))
-      return res.status(400).json({
-        error: { code: 'INVALID_PRODUCT', message: 'One or more products are unavailable.' },
-      });
-    const summary = body.items
-      .map(
-        (i) =>
-          `${repo.byId(i.productId)!.brand} ${repo.byId(i.productId)!.name} (${i.productId}) × ${i.quantity}\n${i.notes}`,
-      )
-      .join('\n\n');
-    const receipt = await submit('enquiry', body, summary);
-    res.status(201).json({ ok: true, ...receipt });
-  } catch (e) {
-    next(e);
+    res.json({ categories: await repo.categories() });
+  } catch (error) {
+    next(error);
   }
 });
+app.get('/api/brands', async (_req, res, next) => {
+  try {
+    res.json({ brands: await repo.brands() });
+  } catch (error) {
+    next(error);
+  }
+});
+for (const [route, type, schema] of [
+  ['/api/contact', 'contact', contactSchema],
+  ['/api/enquiries', 'enquiry', enquirySchema],
+] as const)
+  app.post(route, async (req, res, next) => {
+    try {
+      res.set('Cache-Control', 'no-store');
+      const key = idempotencySchema.safeParse(req.get('Idempotency-Key'));
+      if (!key.success)
+        throw new SubmissionError(
+          'INVALID_IDEMPOTENCY_KEY',
+          400,
+          'Reload this page and try again. A valid submission key is required.',
+        );
+      const body = schema.parse(req.body);
+      if (body.website)
+        throw new SubmissionError(
+          'INVALID_REQUEST',
+          400,
+          'Unable to accept this request. Please contact sales.',
+        );
+      const receipt = await submit(type, body, key.data, clientRateKey(req));
+      res.status(receipt.created ? 201 : 200).json({ ok: true, reference: receipt.reference });
+    } catch (e) {
+      next(e);
+    }
+  });
 app.use('/api', (_req, res) =>
   res.status(404).json({ error: { code: 'NOT_FOUND', message: 'API route not found' } }),
 );
 app.get('/robots.txt', (_req, res) =>
   res.type('text').send(`User-agent: *\nAllow: /\nSitemap: ${config.siteUrl}/sitemap.xml`),
 );
-app.get('/sitemap.xml', (_req, res) => {
-  const urls = [
-    '/',
-    '/about',
-    '/industries',
-    '/market-segments',
-    '/products',
-    '/contact',
-    ...repo.list({}).map((p) => `/products/${p.slug}`),
-  ];
-  const base = config.siteUrl.replace(/\/$/, '').replace(/[<>&"']/g, '');
-  res
-    .type('xml')
-    .send(
-      `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${base}${u}</loc></url>`).join('')}</urlset>`,
-    );
+app.get('/sitemap.xml', async (_req, res, next) => {
+  try {
+    const urls = [
+      '/',
+      '/about',
+      '/industries',
+      '/market-segments',
+      '/products',
+      '/contact',
+      ...(await repo.list({})).map((p) => `/products/${p.slug}`),
+    ];
+    const base = config.siteUrl.replace(/\/$/, '').replace(/[<>&"']/g, '');
+    res
+      .type('xml')
+      .send(
+        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${base}${u}</loc></url>`).join('')}</urlset>`,
+      );
+  } catch (error) {
+    next(error);
+  }
 });
 // Vercel serves the built frontend from its CDN, separately from this function.
 if (config.production && process.env.VERCEL !== '1') {
@@ -117,6 +140,10 @@ if (config.production && process.env.VERCEL !== '1') {
   app.get('*', (_req, res) => res.sendFile(path.join(client, 'index.html')));
 }
 const errors: ErrorRequestHandler = (error, _req, res, _next) => {
+  if (error instanceof SubmissionError) {
+    if (error.retryAfter) res.set('Retry-After', String(error.retryAfter));
+    return res.status(error.status).json({ error: { code: error.code, message: error.message } });
+  }
   if (error instanceof z.ZodError)
     return res.status(400).json({
       error: {
@@ -126,7 +153,7 @@ const errors: ErrorRequestHandler = (error, _req, res, _next) => {
       },
     });
   const status = error.status === 413 ? 413 : error instanceof SyntaxError ? 400 : 503;
-  console.error(error instanceof Error ? error.message : 'Request failed');
+  console.error('API request failed', { status });
   res.status(status).json({
     error: {
       code:

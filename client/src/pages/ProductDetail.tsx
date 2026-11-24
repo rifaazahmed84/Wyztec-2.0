@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { Check, Plus, Download, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { api } from '../api';
 import type { Product } from '../types';
@@ -13,6 +13,7 @@ import ProductImage, { TemporaryImageBadge } from '../components/ProductImage';
 import ProductModelTable from '../components/ProductModelTable';
 export default function ProductDetail() {
   const { slug } = useParams();
+  const { hash } = useLocation();
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [image, setImage] = useState(0);
@@ -22,6 +23,11 @@ export default function ProductDetail() {
   const [retry, setRetry] = useState(0);
   const { add, setOpen } = useEnquiry();
   const carousel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (product && hash === '#request-quote') {
+      document.getElementById('request-quote')?.scrollIntoView({ behavior: 'auto' });
+    }
+  }, [product, hash]);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);

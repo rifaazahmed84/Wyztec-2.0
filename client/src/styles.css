@@ -916,6 +916,7 @@ select {
   font-size: 0.9rem;
 }
 .reference {
+  overflow-wrap: anywhere;
   font-family: monospace;
   overflow-wrap: anywhere;
 }
@@ -1455,6 +1456,7 @@ select {
   line-height: 1.5;
 }
 .product-card-bottom {
+  flex-wrap: wrap;
   border-top: 1px solid var(--line);
   padding-top: 16px;
   display: flex;

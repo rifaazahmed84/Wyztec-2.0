@@ -18,10 +18,14 @@ import { company } from '../config';
 import type { Product } from '../types';
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState<number>();
   useEffect(() => {
     const controller = new AbortController();
     api<{ products: Product[] }>('/api/products', { signal: controller.signal })
-      .then(({ products: p }) => setProducts([p[2], p[8], p[13]].filter(Boolean)))
+      .then(({ products: p }) => {
+        setTotal(p.length);
+        setProducts(p.length >= 14 ? [p[2], p[8], p[13]] : p.slice(0, 3));
+      })
       .catch(() => {});
     return () => controller.abort();
   }, []);
@@ -56,7 +60,8 @@ export default function Home() {
               description="Explore our range of industrial essentials from trusted global brands."
             />
             <Link to="/products" className="button secondary">
-              View all products <span className="small-count">31</span>
+              View all products{' '}
+              {total !== undefined && <span className="small-count">{total}</span>}
             </Link>
           </div>
           <div className="product-grid">

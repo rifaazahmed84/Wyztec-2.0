@@ -1,14 +1,16 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
-const sendMail = vi.fn().mockResolvedValue({ messageId: 'test-id' });
-vi.mock('nodemailer', () => ({ default: { createTransport: () => ({ sendMail }) } }));
-const directory = await mkdtemp(path.join(tmpdir(), 'wyztec-test-'));
-process.env.SUBMISSIONS_DIR = directory;
 process.env.NODE_ENV = 'test';
-delete process.env.SMTP_HOST;
+delete process.env.SUPABASE_URL;
+delete process.env.SUPABASE_SECRET_KEY;
+process.env.QUOTE_RATE_LIMIT_SECRET = 'test-only-rate-limit-secret-at-least-32-characters';
+vi.mock('./database.js', async (original) => {
+  const module = await original<typeof import('./database.js')>();
+  return {
+    ...module,
+    database: { ...module.database, health: vi.fn().mockResolvedValue(undefined) },
+  };
+});
 const { app } = await import('./app.js');
 const { products } = await import('./data/products.js');
 const { productSlugAliases } = await import('./data/product-replacements.js');
@@ -16,21 +18,6 @@ const { productIdAliases } = await import('./data/products.js');
 const { productContent } = await import('./data/product-content.js');
 const { productSpecifications } = await import('./data/product-specifications.js');
 const { productRepository } = await import('./repositories/products.js');
-const { submit } = await import('./submissions.js');
-const contact = {
-  name: 'Test Customer',
-  phone: '+971 5512 64045',
-  email: 'customer@example.com',
-  company: 'Test Industry',
-  message: 'Please quote a replacement motor.',
-  website: '',
-};
-beforeAll(() => {
-  delete process.env.SMTP_HOST;
-});
-afterAll(async () => {
-  await rm(directory, { recursive: true, force: true });
-});
 describe('Catalog API', () => {
   it('lists each replaced product once and resolves old URLs and saved enquiry IDs', async () => {
     const response = await request(app).get('/api/products').expect(200);
@@ -47,7 +34,7 @@ describe('Catalog API', () => {
     }
     expect(Object.keys(productIdAliases)).toHaveLength(16);
     for (const [oldId, newId] of Object.entries(productIdAliases)) {
-      expect(productRepository.byId(oldId)?.id).toBe(newId);
+      expect((await productRepository.byId(oldId))?.id).toBe(newId);
     }
     for (const product of listed) {
       for (const slug of product.relatedSlugs ?? []) {
@@ -105,7 +92,7 @@ describe('Catalog API', () => {
   it('preserves specification units, test conditions and model boundaries', () => {
     const specs = (slug: string) =>
       Object.fromEntries(
-        productRepository.bySlug(slug)!.specs.map(({ label, value }) => [label, value]),
+        products.find((p) => p.slug === slug)!.specs.map(({ label, value }) => [label, value]),
       );
     const flow = specs('jumo-flowtrans-mag-h20');
     expect(flow['DN 6 flow range']).toBe('0.005–5 L/min');
@@ -121,11 +108,11 @@ describe('Catalog API', () => {
       'Up to 18 universal inputs',
     );
     expect(specs('jumo-logoscreen-700')['Recorded analog signals']).toBe('Up to 60');
-    expect(productRepository.bySlug('jumo-thermocouples')!.modelTable!.rows[4][2]).toContain(
+    expect(products.find((p) => p.slug === 'jumo-thermocouples')!.modelTable!.rows[4][2]).toContain(
       'J/L: up to +800 °C',
     );
     for (const slug of ['jumo-flowmeters', 'jumo-paperless-recorders']) {
-      const product = productRepository.bySlug(slug)!;
+      const product = products.find((p) => p.slug === slug)!;
       expect(product.specificationNote).toContain('Exact model required.');
       // The generic listings must not inherit MAG H20 / LOGOSCREEN 700 ratings.
       expect(product.specs.some(({ value }) => /L\/min|125 ms|1 GB|±0\.5|24 V/.test(value))).toBe(
@@ -173,56 +160,5 @@ describe('Catalog API', () => {
     expect(response.headers['x-content-type-options']).toBe('nosniff');
     const allowed = await request(app).get('/api/health').set('Origin', 'http://localhost:5173');
     expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:5173');
-  });
-});
-describe('Submission lifecycle', () => {
-  it('validates, rejects spam silently, persists requests, rejects unknown products and rate limits', async () => {
-    const invalid = await request(app)
-      .post('/api/contact')
-      .send({ ...contact, email: 'invalid' })
-      .expect(400);
-    expect(invalid.body.error.fields.email).toBeTruthy();
-    await request(app)
-      .post('/api/contact')
-      .send({ ...contact, website: 'spam.example' })
-      .expect(200);
-    const callback = await request(app).post('/api/contact').send(contact).expect(201);
-    expect(callback.body.delivery).toBe('development');
-    await request(app)
-      .post('/api/enquiries')
-      .send({ ...contact, items: [{ productId: 'missing', quantity: 1, notes: '' }] })
-      .expect(400);
-    const enquiry = await request(app)
-      .post('/api/enquiries')
-      .send({ ...contact, items: [{ productId: products[0].id, quantity: 3, notes: '400 V, B3' }] })
-      .expect(201);
-    expect(enquiry.body.id).toBeTruthy();
-    const entries = JSON.parse(await readFile(path.join(directory, 'submissions.json'), 'utf8'));
-    expect(entries).toHaveLength(2);
-    expect(entries[1].payload.items[0].quantity).toBe(3);
-    const limited = await request(app).post('/api/contact').send(contact).expect(429);
-    expect(limited.body.error.code).toBe('RATE_LIMIT');
-  });
-  it('serializes simultaneous log writes without dropping enquiries', async () => {
-    await Promise.all(Array.from({ length: 5 }, () => submit('contact', contact)));
-    const entries = JSON.parse(await readFile(path.join(directory, 'submissions.json'), 'utf8'));
-    expect(entries).toHaveLength(7);
-  });
-  it('delivers a sales email and acknowledgement when SMTP is configured', async () => {
-    process.env.SMTP_HOST = 'smtp.test';
-    sendMail.mockClear();
-    await submit('contact', contact);
-    expect(sendMail).toHaveBeenCalledTimes(2);
-    expect(sendMail.mock.calls[0][0].replyTo).toBe(contact.email);
-    expect(sendMail.mock.calls[1][0].to).toBe(contact.email);
-    delete process.env.SMTP_HOST;
-  });
-  it('preserves failed delivery records without reporting successful delivery', async () => {
-    process.env.SMTP_HOST = 'smtp.test';
-    sendMail.mockRejectedValueOnce(new Error('SMTP unavailable'));
-    await expect(submit('contact', contact)).rejects.toThrow('SMTP unavailable');
-    const entries = JSON.parse(await readFile(path.join(directory, 'submissions.json'), 'utf8'));
-    expect(entries.at(-1).delivery).toBe('failed');
-    delete process.env.SMTP_HOST;
   });
 });

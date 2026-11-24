@@ -1,5 +1,7 @@
 import { products, productIdAliases } from '../data/products.js';
 import { productSlugAliases } from '../data/product-replacements.js';
+import { database, databaseConfigured } from '../database.js';
+import { config } from '../config.js';
 export type ProductQuery = {
   q?: string;
   brand?: string;
@@ -7,11 +9,15 @@ export type ProductQuery = {
   industry?: string;
   sort?: string;
 };
-// Repository boundary: replace this module with a database adapter without changing API routes.
+async function catalog() {
+  if (databaseConfigured() || config.production) return database.listProducts();
+  // Browsing-only local preview. Enquiries always require a confirmed database save.
+  return products;
+}
 export const productRepository = {
-  list(query: ProductQuery) {
+  async list(query: ProductQuery) {
     const q = query.q?.toLowerCase().trim();
-    const result = products.filter(
+    const result = (await catalog()).filter(
       (p) =>
         (!q || `${p.name} ${p.brand} ${p.category} ${p.tagline}`.toLowerCase().includes(q)) &&
         (!query.brand || p.brand === query.brand) &&
@@ -24,8 +30,9 @@ export const productRepository = {
     else if (query.sort === 'name-asc') result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
   },
-  bySlug: (slug: string) => products.find((p) => p.slug === (productSlugAliases[slug] ?? slug)),
-  byId: (id: string) => products.find((p) => p.id === (productIdAliases[id] ?? id)),
-  categories: () => [...new Set(products.map((p) => p.category))],
-  brands: () => [...new Set(products.map((p) => p.brand))],
+  bySlug: async (slug: string) =>
+    (await catalog()).find((p) => p.slug === (productSlugAliases[slug] ?? slug)),
+  byId: async (id: string) => (await catalog()).find((p) => p.id === (productIdAliases[id] ?? id)),
+  categories: async () => [...new Set((await catalog()).map((p) => p.category))],
+  brands: async () => [...new Set((await catalog()).map((p) => p.brand))],
 };

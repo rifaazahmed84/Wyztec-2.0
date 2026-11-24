@@ -11,5 +11,7 @@ server/data/*.json
 coverage/
 .qa/
 .vercel/
+supabase/.temp/
+supabase/.branches/
 client/public/images/incoming/*
 !client/public/images/incoming/.gitkeep

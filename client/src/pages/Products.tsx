@@ -88,7 +88,7 @@ export default function Products() {
     <>
       <SEO
         title="Industrial Product Catalog"
-        description="Explore 31 motors, fans, gearboxes, pneumatic components and instruments. Filter by brand, category and industry, then build a product enquiry."
+        description="Explore motors, fans, gearboxes, pneumatic components and instruments. Filter by brand, category and industry, then build a product enquiry."
         noindex={!!key}
       />
       <section className="page-header catalog-header">
@@ -101,9 +101,16 @@ export default function Products() {
           </h1>
           <p>Motors to measurement. The components that keep your industry moving.</p>
           <div className="catalog-summary">
-            <span>31 PRODUCTS</span>
-            <span>6 CATEGORIES</span>
-            <span>5 SUPPLY BRANDS</span>
+            <span>
+              {loading ? '…' : products.length} {count ? 'MATCHING PRODUCTS' : 'PRODUCTS'}
+            </span>
+            <span>{categories.length || '…'} CATEGORIES</span>
+            <span>
+              {brands.length
+                ? new Set(brands.map((b) => b.toLowerCase().replace(/\s/g, ''))).size
+                : '…'}{' '}
+              BRANDS
+            </span>
           </div>
         </div>
         <div className="catalog-header-mark" aria-hidden="true">

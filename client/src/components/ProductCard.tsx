@@ -30,6 +30,9 @@ export default function ProductCard({ product: p }: { product: Product }) {
           <Link className="text-link" to={`/products/${p.slug}`}>
             View details
           </Link>
+          <Link className="text-link" to={`/products/${p.slug}#request-quote`}>
+            Request a quote
+          </Link>
           <button
             className={`add-button ${added ? 'added' : ''}`}
             onClick={() => add(p)}

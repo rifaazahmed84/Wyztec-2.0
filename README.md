@@ -35,13 +35,13 @@ The root vercel.json builds both workspaces and serves client/dist as the fronte
 The api/index.mjs function exports the compiled Express app without a listener.
 There is no Services configuration and no internal binding.
 
-| Setting | Value |
-| --- | --- |
-| Root Directory | Repository root (leave the setting blank) |
-| Framework Preset | Vite |
-| Install Command | npm ci --include=dev |
-| Build Command | npm run build |
-| Output Directory | client/dist |
+| Setting          | Value                                     |
+| ---------------- | ----------------------------------------- |
+| Root Directory   | Repository root (leave the setting blank) |
+| Framework Preset | Vite                                      |
+| Install Command  | npm ci --include=dev                      |
+| Build Command    | npm run build                             |
+| Output Directory | client/dist                               |
 
 Remove conflicting dashboard overrides and the old Services configuration.
 Import the repository root as a single project if the previous service layout
@@ -64,10 +64,7 @@ Set SITE_URL, VITE_SITE_URL (build-time), CORS_ORIGIN and SMTP variables in Verc
 settings. Align the canonical URLs and CORS origin with the public domain.
 Never expose SMTP credentials using a VITE_ prefix.
 
-**Launch blocker:** enquiry logging still writes local JSON before sending mail.
-Migrate to durable database storage before live use on Vercel Functions; /tmp
-is not persistent storage. Configure and test SMTP too. The memory rate limiter
-is per instance, not a global limit. Catalog browsing requires no writable storage.
+**Supabase setup required before deployment:** apply the approved migration, import the catalog, and configure the server credentials and shared rate-limit secret. Quote requests and limits now use PostgreSQL, with no local-file persistence. See [SUPABASE-SETUP.txt](SUPABASE-SETUP.txt) for exact migration, account-access and Vercel deployment steps. Production migrations and deployment require owner approval.
 
 Reference: https://vercel.com/docs/frameworks/frontend/vite
 
@@ -91,40 +88,39 @@ server/
   src/data/product-specifications.ts  Buyer-guide specifications and model-scope notes
   src/data/product-replacements.ts Legacy URLs for replaced duplicate products
   src/repositories/          Replaceable data access boundary
-  src/submissions.ts         Validation, serialized JSON log, SMTP and acknowledgement
+  src/submissions.ts         Validation, idempotency, shared limits and sales notification
+  src/database.ts            Server-only Supabase adapter and product mapping
+  src/scripts/               Repeatable catalog import and read-only access checks
   src/app.ts                 API, security, sitemap and production SPA serving
   src/index.ts               Server entry point
-  data/                     Private runtime submissions (gitignored)
+supabase/migrations/        Versioned schema, RLS, grants and atomic quote transaction
 scripts/                    Asset preparation, optimization and browser / Lighthouse QA
 ```
 
 ## Environment
 
-Copy the root `.env.example` to `.env`. Keep secrets out of version control.
+Copy root `.env.example` to `.env` only if it does not already exist. Supabase and SMTP keys are server-only; never use a `VITE_` prefix for secrets. For the public canonical URL, copy `client/.env.example` to `client/.env.local` and set `VITE_SITE_URL`. Vercel receives all configuration through Project Settings > Environment Variables.
 
-| Variable                 | Purpose                                                                             |
-| ------------------------ | ----------------------------------------------------------------------------------- |
-| `PORT`                   | Express port, default `3001`                                                        |
-| `HOST`                   | Optional binding; defaults to loopback in dev and `0.0.0.0` in production           |
-| `NODE_ENV`               | `development` or `production`; the start script also enables production explicitly  |
-| `CORS_ORIGIN`            | Comma-separated exact allowed browser origins; default `http://localhost:5173`      |
-| `SITE_URL`               | Public absolute site URL for server sitemap and robots                              |
-| `SMTP_HOST`              | SMTP server hostname                                                                |
-| `SMTP_PORT`              | SMTP port; default `587`                                                            |
-| `SMTP_SECURE`            | `true` for implicit TLS, commonly port `465`; otherwise STARTTLS                    |
-| `SMTP_USER`, `SMTP_PASS` | SMTP authentication credentials                                                     |
-| `SMTP_FROM`              | Approved sender identity; default `Wyztec <sales@wyztec.com>`                       |
-| `SALES_EMAIL`            | Internal destination; default `sales@wyztec.com`                                    |
-| `SUBMISSIONS_DIR`        | Optional absolute persistent writable directory; default `server/data`              |
-| `VITE_SITE_URL`          | Optional client canonical URL, read at build time; defaults to `https://wyztec.com` |
+| Variable                                | Purpose                                                                 |
+| --------------------------------------- | ----------------------------------------------------------------------- |
+| `SUPABASE_URL`                          | Supabase project URL                                                    |
+| `SUPABASE_PUBLISHABLE_KEY`              | Published catalog reads and read-only permission checks                 |
+| `SUPABASE_SECRET_KEY`                   | Privileged server key; saves quotes and imports products                |
+| `QUOTE_RATE_LIMIT_SECRET`               | Random value of at least 32 characters, identical on every API instance |
+| `SITE_URL`, `VITE_SITE_URL`             | Matching public website origins for server and client metadata          |
+| `CORS_ORIGIN`                           | Comma-separated allowed browser origins                                 |
+| `PORT`, `HOST`, `NODE_ENV`              | Standalone Express settings; no Vercel overrides needed                 |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | Optional SMTP transport (587/false by default)                          |
+| `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`   | Optional SMTP authentication and approved sender                        |
+| `SALES_EMAIL`                           | Fixed sales inbox, defaults to sales@wyztec.com                         |
 
-Add `VITE_SITE_URL` to `client/.env.production` when deploying to a different domain. It is public configuration, not a secret. Keep `SITE_URL` in the root server `.env` aligned with it.
+A quote succeeds after the database confirms the save. Missing or failed SMTP never loses an enquiry; staff review `notification_status` in Supabase Dashboard. A database failure preserves the form and offers a retry. With no Supabase configuration, development supports catalog preview only; it cannot accept quote requests. Production requires Supabase.
 
-Without SMTP configuration, **development** saves a submission and returns `delivery: "development"`. The UI explicitly says that it was saved locally and email was not sent. In **production**, requests without working SMTP return a service error; the website remains available and the submission record is retained. The basket stays intact when submission fails. Sales delivery and the customer acknowledgement are tested using a mocked SMTP transport; real delivery requires your credentials.
+See [SUPABASE-SETUP.txt](SUPABASE-SETUP.txt) for value sources, local database setup, migration/import commands, staff workflows and deployment approval boundaries.
 
 ## Products and technical review
 
-`server/src/data/products.ts` exports the full `Product` type and assembles the active catalog. It combines the original seeds with `additional-products.ts`, resolves the 16 replacements in `product-replacements.ts`, and applies the editorial fields from `product-content.ts` and technical fields from `product-specifications.ts`. There are 31 active products. Existing URLs and enquiry IDs for replaced products resolve to the newer records. The repository module provides the API boundary for a future database adapter.
+`server/src/data/products.ts` exports the full `Product` type and assembles the active catalog. It combines the original seeds with `additional-products.ts`, resolves the 16 replacements in `product-replacements.ts`, and applies the editorial fields from `product-content.ts` and technical fields from `product-specifications.ts`. There are 31 active products. Existing URLs and enquiry IDs for replaced products resolve to the newer records. These files are the initial import source and offline development preview. Once configured, the live API reads published products from Supabase. Run `npm run db:catalog` to audit without writing, then follow the approved import steps. Repeat imports insert missing IDs and preserve existing staff edits. Manage live content in the Supabase Dashboard; local seed edits do not overwrite existing database rows.
 
 Edit descriptions, card taglines, key features, applications, industry tags and selection guidance in `server/src/data/product-content.ts`, using the active product slug as the key. All 31 entries have four features and four applications; the detail page displays up to four applications. Use the existing industry names from `client/src/data/taxonomy.ts` so filters remain consistent. Manufacturer sources and model-specific limits are documented in [PRODUCT-CONTENT-SOURCES.txt](PRODUCT-CONTENT-SOURCES.txt).
 
@@ -194,28 +190,23 @@ Image integration verification passed for all 27 products at desktop and mobile 
 
 Sort options are `featured`, `name-asc`, `name-desc`, and `brand`. Exact brand / category / industry filters combine with case-insensitive search. The client synchronizes filters to URL parameters and loads cards incrementally.
 
-Contact JSON fields: `name`, `phone`, `email`, `company`, `message`, and the empty `website` honeypot. Enquiries additionally require `items: [{ productId, quantity, notes }]`. Quantity is an integer from 1 to 9999. Products are validated against the server repository; user-supplied product names are not trusted.
+Both POST routes require an `Idempotency-Key` UUID header. Contact JSON fields: `name`, `phone`, `email`, `company`, `message`, and the empty `website` honeypot. Enquiries additionally require `items: [{ productId, quantity, notes }]`. Quantity is an integer from 1 to 9999. Products are validated against the server repository; user-supplied product names are not trusted.
 
-Failures use `{ error: { code, message, fields? } }`. Requests are limited to 32 KB. Both submission routes share a limit of five requests / minute / IP. Honeypot-filled requests are silently discarded. Do not embed personal data in analytics; `client/src/analytics.ts` is an inactive integration point.
+Failures use `{ error: { code, message, fields? } }`. Bodies are limited to 32 KB. Successful new saves return HTTP 201 with `{ ok: true, reference }`; identical retries return HTTP 200 with the same reference. Reusing a key with changed data returns 409. Product publication and quantities are validated before acceptance; product snapshots and the request are saved atomically. Both submission routes share a PostgreSQL limit of five new requests per minute per HMACed IP (IPv6 /64); retries do not consume it. Honeypot-filled requests are rejected without inventing a success receipt.
 
-The JSON log uses a serialized write queue and atomic file replacement for a **single Node process**. It is private and never exposed by Express. Persist it on a durable disk, restrict filesystem access, set a suitable retention policy, and move it to a transactional database before running multiple server replicas. Failed SMTP sends remain logged with a delivery status; operators can follow up manually. A failed acknowledgement is logged separately after sales delivery, avoiding an incorrect retry of an already delivered sales request.
+`quote_requests`, `quote_request_items` and rate-limit rows are private, with RLS and no browser grants. There is no public enquiry lookup or product mutation route. Authorized staff manage products and requests in Supabase Dashboard. Email is sent only to the fixed sales inbox after the save; failed or missing email delivery leaves the request available for review. Do not embed customer details in analytics.
 
 ## Deployment
 
-Use a Node host that supports a persistent disk and SMTP, such as a VM or a Node web service. This Express app is not a static-only deployment or a Cloudflare Worker.
+Use the existing single Vercel project at the repository root. No persistent disk or Supabase Edge Function is needed: `api/index.mjs` deploys the Express backend alongside the Vite frontend. Its 60-second function budget covers bounded database and SMTP operations.
 
-1. Install from the lockfile: `npm ci`.
-2. Configure production variables, SMTP, exact `CORS_ORIGIN`, and `SITE_URL`. Configure `client/.env.production` if changing canonical host.
-3. Run `npm run build` and launch `npm start` under a process supervisor.
-4. Expose `PORT` behind HTTPS. Confirm `/api/health`, a direct product URL, `/sitemap.xml`, and a real test enquiry.
-5. Mount `SUBMISSIONS_DIR` on persistent storage. Never publish this folder or `.env`.
-6. If behind a reverse proxy, configure Express `trust proxy` **only for the known proxy topology** before relying on per-customer IP rate limits. The default does not trust arbitrary forwarded headers. Multiple replicas also require a shared rate-limit store and transactional submission storage.
-
-Security uses Helmet with a self-only script policy, explicit map iframe origins, strict allowed CORS origins, bounded JSON bodies, Zod validation, honeypot and rate limiting. SMTP is server-only. Real account credentials, deliverability, host/network configuration and domain ownership cannot be verified from this repository.
+Follow [SUPABASE-SETUP.txt](SUPABASE-SETUP.txt) for exact local/staging/production migration, catalog import, environment and website deployment commands. Obtain approval before hosted migrations, catalog imports or live deployments (including a Git push that triggers Vercel). The URL/publishable key alone cannot apply migrations or save private requests.
 
 ## Verification
 
-`npm test` runs client interaction tests, Supertest API tests and image-pipeline tests. These check completeness of all 31 active records, editorial coverage, legacy product URLs, combined filters, every detail endpoint, security headers, validation, spam handling, rate limiting, concurrent logging, SMTP success/failure, form recovery, persisted-basket parsing, and drawer focus restoration.
+The Supabase quote implementation passes 35 automated tests plus desktop/mobile browser checks using the actual migration in isolated PostgreSQL. `npm run test:quotes:browser` (after a build, with Chrome installed) tests product selection, quantity, confirmation visibility and a deliberately lost response followed by a retry, verifying exactly one database record. It never loads the local `.env`, contacts Supabase or sends mail. See [CATALOG-IMPORT-REPORT.json](CATALOG-IMPORT-REPORT.json) for preserved content-review flags.
+
+`npm test` runs client interaction tests, Supertest API tests and image-pipeline tests. These check completeness of all 31 active records, editorial coverage, legacy product URLs, combined filters, every detail endpoint, security headers, validation, spam handling, rate limiting, atomic PostgreSQL saves, duplicate/retry handling, shared rate limits, SQL grants/RLS, SMTP success/failure, form recovery, persisted-basket parsing, and drawer focus restoration.
 
 For browser QA, start `npm run dev`, install Chrome, then run:
 
@@ -223,7 +214,7 @@ For browser QA, start `npm run dev`, install Chrome, then run:
 npm run test:browser
 ```
 
-This checks desktop/mobile overflow, WCAG A/AA rules using axe, carousel, industry selector, filter persistence, load more, gallery, all 27 detail pages, form validation, API-backed enquiry and callback submissions, mobile menu and filters. It writes screenshots and a result file to ignored `.qa/`. It creates clearly named QA submissions in the local dev log; do not point it at a live sales endpoint.
+This checks desktop/mobile overflow, WCAG A/AA rules using axe, carousel, industry selector, filter persistence, load more, gallery, all 27 detail pages, form validation, API-backed enquiry and callback submissions, mobile menu and filters. It writes screenshots and a result file to ignored `.qa/`. The legacy browser harness predates this Supabase workflow; use only a local/staging database and an approved test inbox. Do not point it at a live sales endpoint. The current quote-flow regression checks are in `server/src/quotes.test.ts` and `client/src/components/flows.test.tsx`.
 
 For production Lighthouse, build and start the production app, then run:
 
@@ -255,7 +246,7 @@ Verification on this workstation: the client/API suites passed 14 tests; browser
 | Search, URL filters, sort, skeletons, empty/retry state, load more            | `pages/Products.tsx`                                              |
 | Gallery, specs, applications, selection guide, documents when provided        | `pages/ProductDetail.tsx`                                         |
 | Product RFQ, related carousel, structured data, per-product SEO               | `ProductDetail.tsx`, `components/SEO.tsx`                         |
-| Persistent basket, quantity / notes, email and private JSON log               | `context/Enquiry.tsx`, server submission service                  |
+| Persistent basket, quantity / notes, email and private Supabase enquiries     | `context/Enquiry.tsx`, server submission service                  |
 | About / Industries / Segments / Contact / 404                                 | `pages/ContentPage.tsx`, `NotFound.tsx`                           |
 | Address, phone, emails and Google map                                         | `config.ts`, `ContentPage.tsx`                                    |
 | Reduced motion, keyboard support, focus trap, labels, announcements           | `styles.css`, carousel, selector, overlay and form components     |
