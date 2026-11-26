@@ -120,6 +120,12 @@ describe('Catalog API', () => {
       );
     }
   });
+  it('matches brand links across capitalization and spacing variants', async () => {
+    const response = await request(app).get('/api/products').query({ brand: 'metalwork' }).expect(200);
+    const expected = products.filter((p) => p.brand.toLowerCase().replace(/\s/g, '') === 'metalwork');
+    expect(expected.length).toBeGreaterThan(0);
+    expect(response.body.products.map((p: { id: string }) => p.id)).toEqual(expected.map((p) => p.id));
+  });
   it('combines search, brand, category, industry and sort', async () => {
     const response = await request(app)
       .get('/api/products')

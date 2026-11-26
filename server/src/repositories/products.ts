@@ -20,7 +20,7 @@ export const productRepository = {
     const result = (await catalog()).filter(
       (p) =>
         (!q || `${p.name} ${p.brand} ${p.category} ${p.tagline}`.toLowerCase().includes(q)) &&
-        (!query.brand || p.brand === query.brand) &&
+        (!query.brand || p.brand.toLowerCase().replace(/\s/g, '') === query.brand.toLowerCase().replace(/\s/g, '')) &&
         (!query.category || p.category === query.category) &&
         (!query.industry || p.industries.includes(query.industry)),
     );

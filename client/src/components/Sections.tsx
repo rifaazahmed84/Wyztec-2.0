@@ -8,13 +8,12 @@ import {
   Layers3,
   Truck,
   Check,
-  Pause,
-  Play,
 } from 'lucide-react';
 import { useInView, useReducedMotion } from 'framer-motion';
 import { industries, segments } from '../data/taxonomy';
 import { useEnquiry } from '../context/Enquiry';
 import ContactForm from './ContactForm';
+import { api } from '../api';
 export function SectionTitle({
   eyebrow,
   title,
@@ -284,51 +283,73 @@ export function SegmentsSection() {
     </section>
   );
 }
+// Display labels only; the catalog determines which brand cards are shown.
+const featuredBrands = [
+  'Altra', 'Delta', 'Grundfos', 'JUMO', 'Klinger',
+  'Lovejoy', 'Marathon', 'Metal Work', 'Premium Transmission', 'Siemens',
+];
+const brandKey = (name: string) => name.toLowerCase().replace(/\s/g, '');
+const brandLabel = (name: string) =>
+  featuredBrands.find((brand) => brandKey(brand) === brandKey(name)) ?? name;
+const brandLogos: Record<string, { file: string; label: string; dark?: boolean; caption?: string }> = {
+  altra: { file: 'premium-transmission.webp', label: 'Premium Transmission', caption: 'Altra range' },
+  jumo: { file: 'jumo.svg', label: 'JUMO' },
+  marathon: { file: 'marathon.png', label: 'Marathon Electric', dark: true },
+  metalwork: { file: 'metal-work.svg', label: 'Metal Work Pneumatic' },
+  premiumtransmission: { file: 'premium-transmission.webp', label: 'Premium Transmission' },
+  siemens: { file: 'siemens.webp', label: 'Siemens' },
+};
 export function BrandsSection() {
-  const [paused, setPaused] = useState(false);
-  const brands = Object.entries(
-    import.meta.glob('../assets/brands/*.svg', { eager: true, query: '?url', import: 'default' }),
-  ) as [string, string][];
+  const [catalogBrands, setCatalogBrands] = useState<string[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    api<{ brands: string[] }>('/api/brands', { signal: controller.signal })
+      .then(({ brands }) => setCatalogBrands(brands))
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+  const brands = [...new Map(
+    catalogBrands.map((name) => [brandKey(name), name]),
+  ).values()].sort((a, b) => a.localeCompare(b));
   return (
-    <section className="section brands-section">
+    <section className="section supply-brands" id="brands" aria-labelledby="supply-brands-title">
       <div className="container">
-        <div className="section-heading-row">
-          <SectionTitle
-            eyebrow="Global brands. Local expertise."
-            title="All Leading Brands Under One Roof!"
-            description="Your One-Stop Shop for Top Brands"
-          />
-          <button
-            className="icon-button"
-            onClick={() => setPaused(!paused)}
-            aria-label={paused ? 'Play brand marquee' : 'Pause brand marquee'}
-          >
-            {paused ? <Play size={18} /> : <Pause size={18} />}
-          </button>
-        </div>
-        <div
-          className={`brand-marquee ${paused ? 'paused' : ''}`}
-          tabIndex={0}
-          role="region"
-          aria-label="Industrial brands"
-        >
-          <div className="brand-track">
-            {[0, 1].map((copy) => (
-              <div className="brand-group" key={copy} aria-hidden={copy === 1}>
-                {brands.map(([file, url]) => (
-                  <img
-                    key={file}
-                    src={url}
-                    alt={file.split('/').pop()!.replace('.svg', '').replaceAll('-', ' ')}
-                    width={180}
-                    height={60}
-                    loading="lazy"
-                  />
-                ))}
-              </div>
-            ))}
+        <div className="supply-brands-heading">
+          <div>
+            <span className="eyebrow">GLOBAL BRANDS. LOCAL EXPERTISE.</span>
+            <h2 id="supply-brands-title">Brands We Supply</h2>
+            <p>Authorized dealers for leading industrial brands. Your single point of contact for sourcing and support.</p>
           </div>
+          <Link to="/products" className="button primary">Explore our products</Link>
         </div>
+        <ul className="supply-brands-grid">
+          {brands.map((brand) => {
+            const logo = brandLogos[brandKey(brand)];
+            return (
+            <li key={brandKey(brand)}>
+              <Link
+                to={`/products?${new URLSearchParams({ brand })}`}
+                aria-label={`Browse ${brandLabel(brand)} products`}
+              >
+                {logo ? (
+                  <span className={`brand-logo-frame${logo.dark ? ' brand-logo-dark' : ''}`}>
+                    <img
+                      src={`/images/brands/${logo.file}`}
+                      alt={logo.label}
+                      width={220}
+                      height={110}
+                      loading="lazy"
+                    />
+                  </span>
+                ) : <span>{brandLabel(brand)}</span>}
+                {logo?.caption && <span className="brand-range-label">{logo.caption}</span>}
+                <small>Browse products</small>
+              </Link>
+            </li>
+            );
+          })}
+        </ul>
+        <p className="supply-brands-note">Motors &amp; drives &middot; Pneumatics &middot; Power transmission &middot; Process instrumentation</p>
       </div>
     </section>
   );

@@ -7,17 +7,14 @@ const slides = [
   {
     headline: 'Your Partner in Reliable',
     accent: 'Industrial Solutions',
-    image: '/images/industrial-hero.webp',
   },
   {
     headline: 'Innovating Today for Tomorrow’s',
     accent: 'Industrial Needs',
-    image: '/images/industrial-hero.webp',
   },
   {
     headline: 'Unparalleled Precision for',
     accent: 'Unmatched Performance',
-    image: '/images/industrial-engineer.webp',
   },
 ];
 export default function Hero() {
@@ -42,7 +39,7 @@ export default function Hero() {
   const slide = slides[active];
   return (
     <section
-      className="hero"
+      className="hero hero-minimal"
       aria-roledescription="carousel"
       aria-label="Wyztec industrial solutions"
       onMouseEnter={() => setHover(true)}
@@ -61,17 +58,6 @@ export default function Hero() {
         touch.current = null;
       }}
     >
-      <div className="hero-photo">
-        <img
-          key={slide.image}
-          src={slide.image}
-          alt="Industrial infrastructure and engineering operations"
-          width={1600}
-          height={1000}
-          fetchPriority="high"
-        />
-        <div className="photo-shade" />
-      </div>
       <div className="container hero-content">
         <div className="hero-kicker">
           <span /> YOUR INDUSTRIAL SUPPLY PARTNER
@@ -82,7 +68,7 @@ export default function Hero() {
           aria-roledescription="slide"
           aria-label={`Slide ${active + 1} of 3`}
         >
-          <h1>
+          <h1 key={active}>
             {slide.headline}
             <br />
             <span>{slide.accent}</span>

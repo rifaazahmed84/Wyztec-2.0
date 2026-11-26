@@ -2949,3 +2949,106 @@ section[id] {
     display: none;
   }
 }
+
+/* Typography-led hero with restrained ambient lighting. */
+.hero-minimal {
+  background:
+    radial-gradient(ellipse at 95% 0%, #294536 0%, transparent 55%),
+    linear-gradient(115deg, #0e2018, #152d21);
+}
+.hero-minimal .hero-content { padding-top: 76px; }
+.hero-minimal .hero-text { max-width: 1100px; margin: 48px 0 64px; }
+.hero-minimal h1 {
+  max-width: 1100px;
+  font-size: clamp(2.8rem, 5.2vw, 5rem);
+  letter-spacing: -0.045em;
+  animation: hero-heading-enter 650ms ease-out both;
+}
+.hero-minimal .hero-kicker { color: #b9ccbf; }
+.hero-minimal .hero-text p { max-width: 580px; }
+@keyframes hero-heading-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 600px) {
+  .hero-minimal .hero-content { padding-top: 42px; }
+  .hero-minimal .hero-text { margin: 40px 0 48px; }
+  .hero-minimal h1 { font-size: clamp(2.45rem, 8.8vw, 3.5rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-minimal h1 { animation: none; }
+}
+
+/* Prominent, stationary brand directory near the top of the home page. */
+.supply-brands {
+  background: #10291e;
+  color: #fff;
+  border-top: 5px solid var(--green);
+}
+.supply-brands .eyebrow { color: var(--green); }
+.supply-brands-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+.supply-brands-heading h2 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1.12;
+  margin: 16px 0;
+  color: #fff;
+}
+.supply-brands-heading p { max-width: 620px; color: #d3dfd6; }
+.supply-brands-heading .button { flex-shrink: 0; }
+.supply-brands-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.supply-brands-grid li { display: flex; min-width: 0; }
+.supply-brands-grid a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  min-height: 192px;
+  padding: 20px 12px;
+  background: #fff;
+  color: #163c28;
+  border-radius: 4px;
+  text-align: center;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.supply-brands-grid a:hover { background: #e8f4df; }
+.supply-brands-grid a small { font-size: 0.875rem; font-weight: 400; color: #49634f; }
+.brand-logo-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 120px;
+  padding: 10px 16px;
+  background: #fff;
+  border-radius: 3px;
+}
+.brand-logo-frame.brand-logo-dark { background: #17395a; }
+.brand-logo-frame img { display: block; width: 100%; max-width: 220px; height: 100%; object-fit: contain; }
+.brand-range-label { font-size: 0.875rem; line-height: 1.2; }
+.supply-brands-grid a:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 4px;
+  background: #e8f4df;
+}
+.supply-brands-note { margin: 24px 0 0; color: #d3dfd6; }
+@media (max-width: 760px) {
+  .supply-brands-heading { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .supply-brands-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

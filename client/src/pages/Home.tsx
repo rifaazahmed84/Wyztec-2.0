@@ -51,6 +51,7 @@ export default function Home() {
       />
       <Hero />
       <TrustStrip />
+      <BrandsSection />
       <section className="section home-products">
         <div className="container">
           <div className="section-heading-row">
@@ -82,7 +83,6 @@ export default function Home() {
       <WhySection />
       <IndustrySection />
       <SegmentsSection />
-      <BrandsSection />
       <ContactSection />
     </>
   );
