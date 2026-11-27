@@ -290,14 +290,16 @@ const featuredBrands = [
 ];
 const brandKey = (name: string) => name.toLowerCase().replace(/\s/g, '');
 const brandLabel = (name: string) =>
-  featuredBrands.find((brand) => brandKey(brand) === brandKey(name)) ?? name;
+  brandKey(name) === 'siemens'
+    ? 'Siemens / INNOMOTICS'
+    : featuredBrands.find((brand) => brandKey(brand) === brandKey(name)) ?? name;
 const brandLogos: Record<string, { file: string; label: string; dark?: boolean; caption?: string }> = {
   altra: { file: 'premium-transmission.webp', label: 'Premium Transmission', caption: 'Altra range' },
   jumo: { file: 'jumo.svg', label: 'JUMO' },
   marathon: { file: 'marathon.png', label: 'Marathon Electric', dark: true },
   metalwork: { file: 'metal-work.svg', label: 'Metal Work Pneumatic' },
   premiumtransmission: { file: 'premium-transmission.webp', label: 'Premium Transmission' },
-  siemens: { file: 'siemens.webp', label: 'Siemens' },
+  siemens: { file: 'siemens.webp', label: 'Siemens', caption: 'Siemens / INNOMOTICS' },
 };
 export function BrandsSection() {
   const [catalogBrands, setCatalogBrands] = useState<string[]>([]);
